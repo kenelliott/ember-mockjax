@@ -193,7 +193,3 @@ module.exports = (grunt) ->
     "copy:all"
     "ember_handlebars"
   ]
-
-  grunt.registerTask "connect", [
-    "connect:dev"
-  ]
