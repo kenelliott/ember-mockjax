@@ -8,6 +8,4 @@ QUnit.testStart (details) ->
   Ember.testing = true
 
 QUnit.testDone ->
-  Ember.run ->
-    App.Notifications.clear()
   Ember.testing = false
