@@ -1,0 +1,9 @@
+._*
+.DS_Store
+.grunt
+*.js
+*.map
+node_modules
+public
+libs
+!.gitignore

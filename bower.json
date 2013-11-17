@@ -1,0 +1,16 @@
+{
+  "name": "ember-mockjax",
+  "repository": "http//github.com/kenelliott/ember-mockjax",
+  "version": "0.0.1",
+  "dependencies": {
+    "jquery": "~1.9.1",
+    "bootstrap": "3.0.0",
+    "font-awesome": "~3.2.1",
+    "handlebars": "https://raw.github.com/wycats/handlebars.js/1.0.0/dist/handlebars.js",
+    "ember": "http://builds.emberjs.com/canary/ember.js",
+    "ember-data": "http://builds.emberjs.com/canary/ember-data.js",
+    "qunit" : "~1.12.0",
+    "momentjs": "~2.1.0",
+    "jquery-mockjax": "~1.5.3"
+  }
+}
