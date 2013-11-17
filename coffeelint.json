@@ -1,7 +1,7 @@
 {
   "options": {
     "no_tabs": {
-      "level": "error"
+      "level": "ignore"
     },
     "indentation": {
       "level": "error",
