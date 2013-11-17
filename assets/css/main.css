@@ -7328,3 +7328,9 @@ a .icon-flip-vertical:before {
 .icon-renren:before {
   content: "\f18b";
 }
+body {
+  min-height: 2000px;
+}
+.navbar-static-top {
+  margin-bottom: 19px;
+}

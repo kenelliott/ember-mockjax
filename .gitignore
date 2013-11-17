@@ -4,6 +4,7 @@
 *.js
 *.map
 *.css
+*.src.coffee
 node_modules
 public
 libs
