@@ -3,6 +3,7 @@
 .grunt
 *.js
 *.map
+*.css
 node_modules
 public
 libs
