@@ -9,4 +9,5 @@ node_modules
 public
 libs
 !.gitignore
+!jquery.ember-mockjax.js
 app.src.coffee
