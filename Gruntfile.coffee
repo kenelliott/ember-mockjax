@@ -84,6 +84,7 @@ module.exports = (grunt) ->
         options:
           sourceMap: true
           sourceRoot: ""
+          bare: true
         files:
           "./jquery.ember-mockjax.js": [
             "jquery.ember-mockjax.coffee"

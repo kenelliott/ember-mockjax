@@ -11,12 +11,11 @@
     </div>
     <div class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-        <li class="active"><a href="#">Application</a></li>
         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown">Examples <b class="caret"></b></a>
           <ul class="dropdown-menu">
             <li class="dropdown-header">Relationships</li>
-            <li><a href="#">hasMany</a></li>
+            <li>{{#link-to "teams"}}hasMany{{/link-to}}</li>
             <li><a href="#">belongsTo</a></li>
             <li class="divider"></li>
             <li class="dropdown-header">Modifiers</li>
@@ -34,10 +33,5 @@
 </div>
 
 <div class="container">
-    <h1>Ember Mockjax for Active Model Serializer</h1>
-    <p>Emulates Rails Active Model Serializer Requests and Responses</p>
-    <p>
-      <a class="btn btn-lg btn-primary" href="https://github.com/kenelliott/ember-mockjax" role="button">Github Repo</a>
-    </p>
-  </div>
+  {{outlet}}
 </div>
