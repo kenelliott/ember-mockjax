@@ -32,7 +32,7 @@ App.Fixtures.Squads = [
 ,
 	id: 4
 	name: "Squad 4"
-	team_id: 3
+	team_id: 2
 	player_ids: [10,11,12]
 ]
 

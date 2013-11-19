@@ -194,3 +194,7 @@ module.exports = (grunt) ->
     "copy:all"
     "ember_handlebars"
   ]
+
+  grunt.registerTask "em", [
+    "coffee:all"
+  ]
