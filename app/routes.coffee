@@ -3,4 +3,8 @@ App.IndexRoute = Ember.Route.extend
 
 App.TeamsIndexRoute = Ember.Route.extend
   model: ->
-    @get('store').find('team', active: true, wild: true)
+    @get('store').find('team')
+
+App.SquadsIndexRoute = Ember.Route.extend
+  model: ->
+    @get('store').find('squad')

@@ -3,7 +3,7 @@
   $.emberMockJax = (options) ->
 
     # defaults
-    config = 
+    config =
       fixtures: {}
       urls: ["*"]
       debug: false
@@ -18,26 +18,75 @@
       parser.href = url
       parser
 
+    findRecords = (fixtures, fixtureName, queryParams, requestData) ->
+      if settings.debug
+        console.log "=== findRecords ====================="
+        console.log "fixtures", fixtures
+        console.log "fixtureName", fixtureName
+        console.log "queryParams", queryParams
+        console.log "requestData", requestData
+        console.log "====================================="
+        console.log "-"
+
+      fixtures[fixtureName].filter (element, index) ->
+        matches = 0
+
+        for param in queryParams
+          continue unless requestData[param]
+          if settings.debug
+            console.log "=== queryParams ====================="
+            console.log "queryParams", queryParams
+            console.log "element", element
+            console.log "param", param
+            console.log "requestData", requestData
+            console.log "queryParams", queryParams
+            console.log "queryParams[param]", queryParams[param]
+            console.log "=== queryParams ====================="
+            console.log "-"
+
+          if typeof requestData[param] is "object"
+            if element[param.singularize()].toString() in requestData[param]
+              matches += 1
+          else
+            matches += 1 if requestData[param] = element[param]
+
+        true if matches == queryParams.length
+
     $.mockjax
       url: "*"
       responseTime: 0
       response: (request) ->
-        console.log "DEBUG=========================="
-        console.log "request", request
+
+        queryParams             = []
 
         requestType             = request.type.toLowerCase()
         urlObject               = parseUrl(request.url)
         pathObject              = urlObject["pathname"].split("/")
-        modelName               = pathObject.slice(-1).pop().singularize().camelize().capitalize()
+        modelName               = pathObject.slice(-1).pop()
+
+        if /^[0-9]+$/.test modelName
+          modelName = pathObject.slice(-2).shift().singularize().camelize().capitalize()
+        else
+          modelName = modelName.singularize().camelize().capitalize()
+
         fixtureName             = modelName.pluralize()
         resourceName            = modelName.underscore().pluralize()
         emberRelationships      = Ember.get(App[modelName], "relationshipsByName")
         emberRelationshipNames  = emberRelationships.keys.list
         fixtures                = settings.fixtures
         urls                    = settings.urls
-        queryParams             = Object.keys(request.data)
+        queryParams             = Object.keys(request.data) if typeof request.data is "object"
         modelAttributes         = Object.keys(App[modelName].prototype).filter (e) ->
                                     true unless e is "constructor" or e in emberRelationshipNames
+
+        settings.debug = false
+        if settings.debug
+          console.log "=== MockJax request ========================"
+          console.log "request", request
+          console.log "modelName", modelName
+          console.log "========================================"
+          console.log "-"
+        settings.debug = false
 
         json = {}
 
@@ -46,18 +95,13 @@
 
           if queryParams.length
             # find records that match search params
-            json[resourceName] = 
-              fixtures[fixtureName].filter (element, index) ->
-                matches = 0
-                for param in queryParams
-                  matches += 1 if request.data[param] = element[param]
-                true if matches == queryParams.length
+            json[resourceName] = findRecords(fixtures,fixtureName,queryParams,request.data)
 
           else
             # Return all records
             json[resourceName] = fixtures[fixtureName]
-            
-            
+
+
         this.responseText = json
         console.log "MOCKJAX RESPONSE:", json
 
