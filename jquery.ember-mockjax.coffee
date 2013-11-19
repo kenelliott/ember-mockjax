@@ -57,7 +57,6 @@
         pathObject              = urlObject["pathname"].split("/")
         modelName               = pathObject.slice(-1).pop()
 
-        # if path is /model/1
         if /^[0-9]+$/.test modelName
           modelName = pathObject.slice(-2).shift().singularize().camelize().capitalize()
         else

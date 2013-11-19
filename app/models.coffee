@@ -11,7 +11,7 @@ App.Player = DS.Model.extend
   name: DS.attr "string"
   squad: DS.belongsTo "squad"
   medals: DS.hasMany "medal",   async: false
-  weapons: DS.hasMany "weapon", async: true, embedded: "always"
+  weapons: DS.hasMany "weapon", async: false
 
 App.Medal = DS.Model.extend
   name: DS.attr "string"
