@@ -5,7 +5,7 @@ App.Team = DS.Model.extend
 App.Squad = DS.Model.extend
   name: DS.attr "string"
   players: DS.hasMany "player", async: true
-  team: DS.belongsTo "team"
+  team: DS.belongsTo "team",    nested: true
 
 App.Player = DS.Model.extend
   name: DS.attr "string"

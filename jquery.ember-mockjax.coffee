@@ -51,13 +51,15 @@
       response: (request) ->
 
         queryParams             = []
+        json                    = {}
 
         requestType             = request.type.toLowerCase()
-        urlObject               = parseUrl(request.url)
-        pathObject              = urlObject["pathname"].split("/")
+        pathObject              = parseUrl(request.url)["pathname"].split("/")
         modelName               = pathObject.slice(-1).pop()
 
         if /^[0-9]+$/.test modelName
+          request.data = {} unless typeof request.data is "object"
+          request.data.ids = [modelName]
           modelName = pathObject.slice(-2).shift().singularize().camelize().capitalize()
         else
           modelName = modelName.singularize().camelize().capitalize()
@@ -65,23 +67,10 @@
         fixtureName             = modelName.pluralize()
         resourceName            = modelName.underscore().pluralize()
         emberRelationships      = Ember.get(App[modelName], "relationshipsByName")
-        emberRelationshipNames  = emberRelationships.keys.list
         fixtures                = settings.fixtures
-        urls                    = settings.urls
         queryParams             = Object.keys(request.data) if typeof request.data is "object"
         modelAttributes         = Object.keys(App[modelName].prototype).filter (e) ->
-                                    true unless e is "constructor" or e in emberRelationshipNames
-
-        settings.debug = false
-        if settings.debug
-          console.log "=== MockJax request ========================"
-          console.log "emberRelationships", emberRelationships
-          console.log "modelName", modelName
-          console.log "========================================"
-          console.log "-"
-        settings.debug = false
-
-        json = {}
+                                    true unless e is "constructor" or e in emberRelationships.keys.list
 
         if requestType is "get"
           console.warn("Fixtures not found for Model : #{modelName}") unless fixtures[fixtureName]

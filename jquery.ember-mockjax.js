@@ -67,13 +67,17 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       url: "*",
       responseTime: 0,
       response: function(request) {
-        var emberRelationshipNames, emberRelationships, fixtureName, fixtures, json, modelAttributes, modelName, pathObject, queryParams, requestType, resourceName, urlObject, urls;
+        var emberRelationships, fixtureName, fixtures, json, modelAttributes, modelName, pathObject, queryParams, requestType, resourceName;
         queryParams = [];
+        json = {};
         requestType = request.type.toLowerCase();
-        urlObject = parseUrl(request.url);
-        pathObject = urlObject["pathname"].split("/");
+        pathObject = parseUrl(request.url)["pathname"].split("/");
         modelName = pathObject.slice(-1).pop();
+        console.log("modelName", modelName);
+        console.log("request", request);
         if (/^[0-9]+$/.test(modelName)) {
+          request.data = {};
+          request.data.ids = [modelName];
           modelName = pathObject.slice(-2).shift().singularize().camelize().capitalize();
         } else {
           modelName = modelName.singularize().camelize().capitalize();
@@ -81,27 +85,15 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
         fixtureName = modelName.pluralize();
         resourceName = modelName.underscore().pluralize();
         emberRelationships = Ember.get(App[modelName], "relationshipsByName");
-        emberRelationshipNames = emberRelationships.keys.list;
         fixtures = settings.fixtures;
-        urls = settings.urls;
         if (typeof request.data === "object") {
           queryParams = Object.keys(request.data);
         }
         modelAttributes = Object.keys(App[modelName].prototype).filter(function(e) {
-          if (!(e === "constructor" || __indexOf.call(emberRelationshipNames, e) >= 0)) {
+          if (!(e === "constructor" || __indexOf.call(emberRelationships.keys.list, e) >= 0)) {
             return true;
           }
         });
-        settings.debug = false;
-        if (settings.debug) {
-          console.log("=== MockJax request ========================");
-          console.log("emberRelationships", emberRelationships);
-          console.log("modelName", modelName);
-          console.log("========================================");
-          console.log("-");
-        }
-        settings.debug = false;
-        json = {};
         if (requestType === "get") {
           if (!fixtures[fixtureName]) {
             console.warn("Fixtures not found for Model : " + modelName);

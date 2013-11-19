@@ -1,0 +1,23 @@
+<h1>Show Player</h1>
+<div class="row">
+  <div class="well well-lg">
+    Testing primary key in route
+  </div>
+</div>
+<div class="row">
+  <div class='col-lg-6' style="min-height:300px">
+    <h2>{{name}} - {{squad.name}}</h2>
+    <h4>Weapons</h4>
+    <ol>
+      {{#each weapons}}
+        <li>{{name}}</li>
+      {{/each}}
+    </ol>
+    <h4>Medals</h4>
+    <ol>
+      {{#each medals}}
+        <li>{{name}}</li>
+      {{/each}}
+    </ol>
+  </div>
+</div>

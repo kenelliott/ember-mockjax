@@ -12,3 +12,13 @@ App.SquadsIndexRoute = Ember.Route.extend
 App.PlayersIndexRoute = Ember.Route.extend
   model: ->
     @get('store').find('player')
+
+App.SquadsNewRoute = Ember.Route.extend
+  model: ->
+    @get('store').createRecord('squad', name: "test squad", team: @get('store').createRecord('team', name: "test team"))
+
+App.PlayerIndexRoute = Ember.Route.extend
+  model: (params) ->
+    @modelFor 'player'
+  renderTemplate: ->
+    @render 'players/show'

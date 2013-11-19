@@ -10,7 +10,7 @@
       <h2>{{team.name}} - {{name}}</h2>
       <ol>
         {{#each players}}
-          <li>{{name}}</li>
+          <li>{{#link-to "player" id}}{{name}}{{/link-to}}</li>
         {{/each}}
       </ol>
     </div>
