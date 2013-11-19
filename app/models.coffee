@@ -1,6 +1,6 @@
 App.Team = DS.Model.extend
   name: DS.attr "string"
-  squads: DS.hasMany "squad", async: true
+  squads: DS.hasMany "squad",   async: true
 
 App.Squad = DS.Model.extend
   name: DS.attr "string"
@@ -9,8 +9,9 @@ App.Squad = DS.Model.extend
 
 App.Player = DS.Model.extend
   name: DS.attr "string"
-  medals: DS.hasMany "medal", async: false
-  weapons: DS.hasMany "weapon", embedded: "always"
+  squad: DS.belongsTo "squad"
+  medals: DS.hasMany "medal",   async: false
+  weapons: DS.hasMany "weapon", async: true, embedded: "always"
 
 App.Medal = DS.Model.extend
   name: DS.attr "string"

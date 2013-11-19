@@ -39,61 +39,73 @@ App.Fixtures.Squads = [
 App.Fixtures.Players = [
 	id: 1
 	name: "Player 1"
+	squad_id: 1
 	medal_ids: [1,2]
 	weapon_ids: [1,2]
 ,
 	id: 2
 	name: "Player 2"
+	squad_id: 1
 	medal_ids: [2,4]
 	weapon_ids: [2,4]
 ,
 	id: 3
 	name: "Player 3"
+	squad_id: 1
 	medal_ids: [5]
 	weapon_ids: [1,5]
 ,
 	id: 4
 	name: "Player 4"
+	squad_id: 2
 	medal_ids: [1,4,5]
 	weapon_ids: [3,4]
 ,
 	id: 5
 	name: "Player 5"
+	squad_id: 2
 	medal_ids: [1]
 	weapon_ids: [2,5]
 ,
 	id: 6
 	name: "Player 6"
+	squad_id: 2
 	medal_ids: [3]
 	weapon_ids: [1]
 ,
 	id: 7
 	name: "Player 7"
+	squad_id: 3
 	medal_ids: []
 	weapon_ids: [4,5]
 ,
 	id: 8
 	name: "Player 8"
+	squad_id: 3
 	medal_ids: [3,4,5]
 	weapon_ids: [2]
 ,
 	id: 9
 	name: "Player 9"
+	squad_id: 3
 	medal_ids: [1,2,3,4,5]
 	weapon_ids: [4,5]
 ,
 	id: 10
 	name: "Player 10"
+	squad_id: 4
 	medal_ids: [2,4]
 	weapon_ids: [2,4]
 ,
 	id: 11
 	name: "Player 11"
+	squad_id: 4
 	medal_ids: [1,3]
 	weapon_ids: [4]
 ,
 	id: 12
 	name: "Player 2"
+	squad_id: 4
 	medal_ids: [1]
 	weapon_ids: [4,5]
 ]

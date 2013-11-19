@@ -2,7 +2,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
 
 (function($) {
   return $.emberMockJax = function(options) {
-    var config, findRecords, log, parseUrl, settings;
+    var config, findRecords, log, parseUrl, settings, sideloadRecords, uniqueArray;
     config = {
       fixtures: {},
       urls: ["*"],
@@ -21,36 +21,16 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       return parser;
     };
     findRecords = function(fixtures, fixtureName, queryParams, requestData) {
-      if (settings.debug) {
-        console.log("=== findRecords =====================");
-        console.log("fixtures", fixtures);
-        console.log("fixtureName", fixtureName);
-        console.log("queryParams", queryParams);
-        console.log("requestData", requestData);
-        console.log("=====================================");
-        console.log("-");
-      }
       return fixtures[fixtureName].filter(function(element, index) {
-        var matches, param, _i, _len, _ref;
+        var matches, param, _i, _len, _ref, _ref1;
         matches = 0;
         for (_i = 0, _len = queryParams.length; _i < _len; _i++) {
           param = queryParams[_i];
           if (!requestData[param]) {
             continue;
           }
-          if (settings.debug) {
-            console.log("=== queryParams =====================");
-            console.log("queryParams", queryParams);
-            console.log("element", element);
-            console.log("param", param);
-            console.log("requestData", requestData);
-            console.log("queryParams", queryParams);
-            console.log("queryParams[param]", queryParams[param]);
-            console.log("=== queryParams =====================");
-            console.log("-");
-          }
           if (typeof requestData[param] === "object") {
-            if (_ref = element[param.singularize()].toString(), __indexOf.call(requestData[param], _ref) >= 0) {
+            if ((_ref = element[param.singularize()].toString(), __indexOf.call(requestData[param], _ref) >= 0) || (_ref1 = element[param.singularize()], __indexOf.call(requestData[param], _ref1) >= 0)) {
               matches += 1;
             }
           } else {
@@ -63,6 +43,25 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
           return true;
         }
       });
+    };
+    uniqueArray = function(arr) {
+      arr = arr.map(function(k) {
+        return k.toString();
+      });
+      return $.grep(arr, function(v, k) {
+        return $.inArray(v, arr) === k;
+      });
+    };
+    sideloadRecords = function(fixtures, name, parent) {
+      var params, res, temp;
+      temp = [];
+      params = [];
+      res = [];
+      parent.forEach(function(record) {
+        return $.merge(res, record[name.singularize() + "_ids"]);
+      });
+      params["ids"] = uniqueArray(res);
+      return findRecords(fixtures, name.capitalize(), ["ids"], params);
     };
     return $.mockjax({
       url: "*",
@@ -96,7 +95,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
         settings.debug = false;
         if (settings.debug) {
           console.log("=== MockJax request ========================");
-          console.log("request", request);
+          console.log("emberRelationships", emberRelationships);
           console.log("modelName", modelName);
           console.log("========================================");
           console.log("-");
@@ -112,6 +111,13 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
           } else {
             json[resourceName] = fixtures[fixtureName];
           }
+          emberRelationships.forEach(function(name, relationship) {
+            if (__indexOf.call(Object.keys(relationship.options), "async") >= 0) {
+              if (!relationship.options.async) {
+                return json[name] = sideloadRecords(fixtures, name, json[resourceName]);
+              }
+            }
+          });
         }
         this.responseText = json;
         return console.log("MOCKJAX RESPONSE:", json);

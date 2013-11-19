@@ -19,38 +19,31 @@
       parser
 
     findRecords = (fixtures, fixtureName, queryParams, requestData) ->
-      if settings.debug
-        console.log "=== findRecords ====================="
-        console.log "fixtures", fixtures
-        console.log "fixtureName", fixtureName
-        console.log "queryParams", queryParams
-        console.log "requestData", requestData
-        console.log "====================================="
-        console.log "-"
-
       fixtures[fixtureName].filter (element, index) ->
         matches = 0
-
         for param in queryParams
           continue unless requestData[param]
-          if settings.debug
-            console.log "=== queryParams ====================="
-            console.log "queryParams", queryParams
-            console.log "element", element
-            console.log "param", param
-            console.log "requestData", requestData
-            console.log "queryParams", queryParams
-            console.log "queryParams[param]", queryParams[param]
-            console.log "=== queryParams ====================="
-            console.log "-"
-
           if typeof requestData[param] is "object"
-            if element[param.singularize()].toString() in requestData[param]
+            if element[param.singularize()].toString() in requestData[param] or element[param.singularize()] in requestData[param]
               matches += 1
           else
             matches += 1 if requestData[param] = element[param]
-
         true if matches == queryParams.length
+
+    uniqueArray = (arr) ->
+      arr = arr.map (k) -> k.toString()
+      $.grep arr, (v, k) ->
+        $.inArray(v ,arr) == k
+
+    sideloadRecords = (fixtures, name, parent) ->
+      temp = []
+      params = []
+      res = []
+      parent.forEach (record) ->
+        $.merge(res, record[name.singularize() + "_ids"])
+
+      params["ids"] = uniqueArray res
+      findRecords(fixtures,name.capitalize(),["ids"],params)
 
     $.mockjax
       url: "*"
@@ -64,6 +57,7 @@
         pathObject              = urlObject["pathname"].split("/")
         modelName               = pathObject.slice(-1).pop()
 
+        # if path is /model/1
         if /^[0-9]+$/.test modelName
           modelName = pathObject.slice(-2).shift().singularize().camelize().capitalize()
         else
@@ -82,7 +76,7 @@
         settings.debug = false
         if settings.debug
           console.log "=== MockJax request ========================"
-          console.log "request", request
+          console.log "emberRelationships", emberRelationships
           console.log "modelName", modelName
           console.log "========================================"
           console.log "-"
@@ -92,15 +86,16 @@
 
         if requestType is "get"
           console.warn("Fixtures not found for Model : #{modelName}") unless fixtures[fixtureName]
-
           if queryParams.length
-            # find records that match search params
             json[resourceName] = findRecords(fixtures,fixtureName,queryParams,request.data)
-
           else
-            # Return all records
             json[resourceName] = fixtures[fixtureName]
 
+          emberRelationships.forEach (name,relationship) ->
+            # async = false / sideload records
+            if "async" in Object.keys(relationship.options)
+              unless relationship.options.async
+                json[name] = sideloadRecords(fixtures,name,json[resourceName])
 
         this.responseText = json
         console.log "MOCKJAX RESPONSE:", json
