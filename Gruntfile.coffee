@@ -73,9 +73,9 @@ module.exports = (grunt) ->
       compile:
         options:
           processName: (sourceFile) ->
-            return sourceFile.replace("./templates/", "").replace(".hbs","")
+            return sourceFile.replace("./app/templates/", "").replace(".hbs","")
         files:
-          "./compiled-templates.js": "./templates/**/*.hbs"
+          "./compiled-templates.js": "./app/templates/**/*.hbs"
 
     # CoffeeScript
     # ----------------------------------------------------------------------------------
@@ -103,8 +103,8 @@ module.exports = (grunt) ->
         files:
           [
             {
-              src: ["./assets/css/main.less"]
-              dest: "./assets/css/main.css"
+              src: ["./app/assets/css/main.less"]
+              dest: "./app/assets/css/main.css"
             }
           ]
 
@@ -114,27 +114,27 @@ module.exports = (grunt) ->
       options:
         livereload: true
       templates:
-        files: "#{srcFolder}/templates/**/*.hbs"
+        files: "./app/templates/**/*.hbs"
         tasks: ["ember_handlebars"]
         options:
           nospawn: true
       coffee:
-        files: "#{srcFolder}/*.coffee"
+        files: "./app/**/*.coffee"
         tasks: ["coffee"]
         options:
           sourceMap: true
           sourceRoot: ""
       less:
-        files: "#{srcFolder}/**/*.less"
+        files: "./app/**/*.less"
         tasks: ["less:all"]
       html:
-        files: "#{srcFolder}/**/*.html"
+        files: "./app/**/*.html"
         tasks:  ["copy"]
 
   # WATCH EVENT
   # ------------------------------------------------------------------------------------
   grunt.event.on "watch", (action, filepath) ->
-    cwd = "#{srcFolder}"
+    cwd = "./app"
     filepath = filepath.replace cwd, ""
     isCoffee = path.extname(filepath) == ".coffee"
     isHTML = path.extname(filepath) == ".html"
