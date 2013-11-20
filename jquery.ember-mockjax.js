@@ -2,7 +2,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
 
 (function($) {
   return $.emberMockJax = function(options) {
-    var config, findRecords, log, parseUrl, settings, sideloadRecords, uniqueArray;
+    var addRecord, addRelatedRecord, config, findRecords, log, parseUrl, settings, sideloadRecords, uniqueArray;
     config = {
       fixtures: {},
       urls: ["*"],
@@ -63,27 +63,61 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       params["ids"] = uniqueArray(res);
       return findRecords(fixtures, name.capitalize(), ["ids"], params);
     };
+    addRelatedRecord = function(fixtures, json, name, new_record, singleResourceName) {
+      var duplicated_record;
+      if (typeof json[name.resourceize()] !== "object") {
+        json[name.resourceize()] = [];
+      }
+      duplicated_record = fixtures[name.fixtureize()].slice(-1).pop();
+      duplicated_record.id = parseInt(duplicated_record.id) + 1;
+      $.extend(duplicated_record, new_record[singleResourceName][name + "_attributes"]);
+      fixtures[name.fixtureize()].push(duplicated_record);
+      delete new_record[singleResourceName][name + "_attributes"];
+      new_record[singleResourceName][name + "_id"] = duplicated_record.id;
+      json[name.resourceize()].push(duplicated_record);
+      return json;
+    };
+    addRecord = function(fixtures, json, new_record, fixtureName, resourceName, singleResourceName) {
+      var duplicated_record;
+      duplicated_record = fixtures[fixtureName].slice(-1).pop();
+      duplicated_record.id = parseInt(duplicated_record.id) + 1;
+      $.extend(duplicated_record, new_record[singleResourceName]);
+      fixtures[fixtureName].push(duplicated_record);
+      json[resourceName].push(duplicated_record);
+      return json;
+    };
+    String.prototype.fixtureize = function() {
+      if (typeof name === "string") {
+        return this.camelize().capitalize().pluralize();
+      }
+    };
+    String.prototype.resourceize = function() {
+      if (typeof name === "string") {
+        return this.pluralize().underscore();
+      }
+    };
     return $.mockjax({
       url: "*",
       responseTime: 0,
       response: function(request) {
-        var emberRelationships, fixtureName, fixtures, json, modelAttributes, modelName, pathObject, queryParams, requestType, resourceName;
+        var emberRelationships, fixtureName, fixtures, json, modelAttributes, modelName, new_record, pathObject, queryParams, requestType, resourceName, singleResourceName;
         queryParams = [];
         json = {};
         requestType = request.type.toLowerCase();
         pathObject = parseUrl(request.url)["pathname"].split("/");
         modelName = pathObject.slice(-1).pop();
-        console.log("modelName", modelName);
-        console.log("request", request);
         if (/^[0-9]+$/.test(modelName)) {
-          request.data = {};
+          if (typeof request.data !== "object") {
+            request.data = {};
+          }
           request.data.ids = [modelName];
           modelName = pathObject.slice(-2).shift().singularize().camelize().capitalize();
         } else {
           modelName = modelName.singularize().camelize().capitalize();
         }
-        fixtureName = modelName.pluralize();
-        resourceName = modelName.underscore().pluralize();
+        fixtureName = modelName.fixtureize();
+        resourceName = modelName.resourceize();
+        singleResourceName = resourceName.singularize();
         emberRelationships = Ember.get(App[modelName], "relationshipsByName");
         fixtures = settings.fixtures;
         if (typeof request.data === "object") {
@@ -94,6 +128,19 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
             return true;
           }
         });
+        if (requestType === "post") {
+          new_record = JSON.parse(request.data);
+          json[resourceName] = [];
+          emberRelationships.forEach(function(name, relationship) {
+            if (__indexOf.call(Object.keys(relationship.options), "nested") >= 0) {
+              if (!relationship.options.async) {
+                return json = addRelatedRecord(fixtures, json, name, new_record, singleResourceName);
+              }
+            }
+          });
+          this.responseText = addRecord(fixtures, json, new_record, fixtureName, resourceName, singleResourceName);
+          this.responseText = json;
+        }
         if (requestType === "get") {
           if (!fixtures[fixtureName]) {
             console.warn("Fixtures not found for Model : " + modelName);
@@ -110,9 +157,9 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
               }
             }
           });
+          this.responseText = json;
         }
-        this.responseText = json;
-        return console.log("MOCKJAX RESPONSE:", json);
+        return console.log("MOCKJAX RESPONSE:", this.responseText);
       }
     });
   };

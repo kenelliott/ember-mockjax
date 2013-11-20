@@ -45,6 +45,31 @@
       params["ids"] = uniqueArray res
       findRecords(fixtures,name.capitalize(),["ids"],params)
 
+    addRelatedRecord = (fixtures, json, name, new_record, singleResourceName) ->
+      json[name.resourceize()] = [] unless typeof json[name.resourceize()] is "object"
+      duplicated_record = fixtures[name.fixtureize()].slice(-1).pop()
+      duplicated_record.id = parseInt(duplicated_record.id) + 1
+      $.extend(duplicated_record,new_record[singleResourceName][name + "_attributes"])
+      fixtures[name.fixtureize()].push(duplicated_record)
+      delete new_record[singleResourceName][name + "_attributes"]
+      new_record[singleResourceName][name + "_id"] = duplicated_record.id
+      json[name.resourceize()].push(duplicated_record)
+      json
+
+    addRecord = (fixtures, json, new_record, fixtureName, resourceName, singleResourceName) ->
+      duplicated_record = fixtures[fixtureName].slice(-1).pop()
+      duplicated_record.id = parseInt(duplicated_record.id) + 1
+      $.extend(duplicated_record, new_record[singleResourceName])
+      fixtures[fixtureName].push(duplicated_record)
+      json[resourceName].push(duplicated_record)
+      json
+
+    String::fixtureize = ->
+      this.camelize().capitalize().pluralize() if typeof name is "string"
+
+    String::resourceize = ->
+      this.pluralize().underscore() if typeof name is "string"
+
     $.mockjax
       url: "*"
       responseTime: 0
@@ -64,13 +89,25 @@
         else
           modelName = modelName.singularize().camelize().capitalize()
 
-        fixtureName             = modelName.pluralize()
-        resourceName            = modelName.underscore().pluralize()
+        fixtureName             = modelName.fixtureize()
+        resourceName            = modelName.resourceize()
+        singleResourceName      = resourceName.singularize()
         emberRelationships      = Ember.get(App[modelName], "relationshipsByName")
         fixtures                = settings.fixtures
         queryParams             = Object.keys(request.data) if typeof request.data is "object"
         modelAttributes         = Object.keys(App[modelName].prototype).filter (e) ->
                                     true unless e is "constructor" or e in emberRelationships.keys.list
+
+        if requestType is "post"
+          new_record = JSON.parse(request.data)
+          json[resourceName] = []
+          emberRelationships.forEach (name,relationship) ->
+            if "nested" in Object.keys(relationship.options)
+              unless relationship.options.async
+                json = addRelatedRecord(fixtures,json,name,new_record,singleResourceName)
+
+          @responseText = addRecord(fixtures,json,new_record,fixtureName,resourceName,singleResourceName)
+          @responseText = json
 
         if requestType is "get"
           console.warn("Fixtures not found for Model : #{modelName}") unless fixtures[fixtureName]
@@ -85,8 +122,9 @@
               unless relationship.options.async
                 json[name] = sideloadRecords(fixtures,name,json[resourceName])
 
-        this.responseText = json
-        console.log "MOCKJAX RESPONSE:", json
+          @responseText = json
+
+        console.log "MOCKJAX RESPONSE:", @responseText
 
 ) jQuery
 
