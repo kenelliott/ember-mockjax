@@ -1,0 +1,21 @@
+<h1>New Squad</h1>
+<div class="row">
+  <div class="well well-lg">
+    Testing nested attributes.
+  </div>
+</div>
+<div class="row">
+  <form role="form">
+    <div class="form-group">
+      <label for="name">Squad Name</label>
+      {{input type="text" valueBinding="model.name" class="form-control" id="name" placeholder="Name"}}
+    </div>
+    <div class="form-group">
+      <label for="team-name">Team Name</label>
+      {{input type="text" valueBinding="model.team.name" class="form-control" id="team-name" placeholder="Team Name"}}
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary" {{action "save"}}>Create Squad</button>
+    </div>
+  </form>
+</div>

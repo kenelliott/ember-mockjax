@@ -68,7 +68,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       if (typeof json[name.resourceize()] !== "object") {
         json[name.resourceize()] = [];
       }
-      duplicated_record = fixtures[name.fixtureize()].slice(-1).pop();
+      duplicated_record = $.extend(true, {}, fixtures[name.fixtureize()].slice(-1).pop());
       duplicated_record.id = parseInt(duplicated_record.id) + 1;
       $.extend(duplicated_record, new_record[singleResourceName][name + "_attributes"]);
       fixtures[name.fixtureize()].push(duplicated_record);
@@ -79,7 +79,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
     };
     addRecord = function(fixtures, json, new_record, fixtureName, resourceName, singleResourceName) {
       var duplicated_record;
-      duplicated_record = fixtures[fixtureName].slice(-1).pop();
+      duplicated_record = $.extend(true, {}, fixtures[fixtureName].slice(-1).pop());
       duplicated_record.id = parseInt(duplicated_record.id) + 1;
       $.extend(duplicated_record, new_record[singleResourceName]);
       fixtures[fixtureName].push(duplicated_record);
@@ -139,11 +139,17 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
             }
           });
           this.responseText = addRecord(fixtures, json, new_record, fixtureName, resourceName, singleResourceName);
-          this.responseText = json;
+        }
+        if (requestType === "put") {
+          console.log("put it");
         }
         if (requestType === "get") {
           if (!fixtures[fixtureName]) {
             console.warn("Fixtures not found for Model : " + modelName);
+          }
+          if (fixtureName === "Teams") {
+            console.log("Fixtures", fixtures[fixtureName]);
+            console.log("request", request);
           }
           if (queryParams.length) {
             json[resourceName] = findRecords(fixtures, fixtureName, queryParams, request.data);

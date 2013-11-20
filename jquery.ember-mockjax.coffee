@@ -47,7 +47,7 @@
 
     addRelatedRecord = (fixtures, json, name, new_record, singleResourceName) ->
       json[name.resourceize()] = [] unless typeof json[name.resourceize()] is "object"
-      duplicated_record = fixtures[name.fixtureize()].slice(-1).pop()
+      duplicated_record = $.extend(true, {}, fixtures[name.fixtureize()].slice(-1).pop())
       duplicated_record.id = parseInt(duplicated_record.id) + 1
       $.extend(duplicated_record,new_record[singleResourceName][name + "_attributes"])
       fixtures[name.fixtureize()].push(duplicated_record)
@@ -57,7 +57,7 @@
       json
 
     addRecord = (fixtures, json, new_record, fixtureName, resourceName, singleResourceName) ->
-      duplicated_record = fixtures[fixtureName].slice(-1).pop()
+      duplicated_record = $.extend(true, {}, fixtures[fixtureName].slice(-1).pop())
       duplicated_record.id = parseInt(duplicated_record.id) + 1
       $.extend(duplicated_record, new_record[singleResourceName])
       fixtures[fixtureName].push(duplicated_record)
@@ -107,10 +107,15 @@
                 json = addRelatedRecord(fixtures,json,name,new_record,singleResourceName)
 
           @responseText = addRecord(fixtures,json,new_record,fixtureName,resourceName,singleResourceName)
-          @responseText = json
+
+        if requestType is "put"
+          console.log "put it"
 
         if requestType is "get"
           console.warn("Fixtures not found for Model : #{modelName}") unless fixtures[fixtureName]
+          if fixtureName is "Teams"
+            console.log "Fixtures", fixtures[fixtureName]
+            console.log "request", request
           if queryParams.length
             json[resourceName] = findRecords(fixtures,fixtureName,queryParams,request.data)
           else
