@@ -81,11 +81,18 @@
         requestType             = request.type.toLowerCase()
         pathObject              = parseUrl(request.url)["pathname"].split("/")
         modelName               = pathObject.slice(-1).pop()
+        putId                   = null
 
         if /^[0-9]+$/.test modelName
-          request.data = {} unless typeof request.data is "object"
-          request.data.ids = [modelName]
+          if requestType is "get"
+            request.data = {} if typeof request.data is "undefined"
+            request.data.ids = [modelName]
+
+          if requestType is "put"
+            putId = modelName
+
           modelName = pathObject.slice(-2).shift().singularize().camelize().capitalize()
+
         else
           modelName = modelName.singularize().camelize().capitalize()
 
@@ -109,13 +116,29 @@
           @responseText = addRecord(fixtures,json,new_record,fixtureName,resourceName,singleResourceName)
 
         if requestType is "put"
-          console.log "put it"
+          new_record = JSON.parse(request.data)
+          json[resourceName] = []
+          emberRelationships.forEach (name,relationship) ->
+            if "nested" in Object.keys(relationship.options)
+              unless relationship.options.async
+                fixtures[name.fixtureize()].forEach (record) ->
+                  if record.id is parseInt(new_record[singleResourceName][name + "_attributes"].id)
+                    $.extend(record, new_record[singleResourceName][name + "_attributes"])
+                    json[name.resourceize()] = [] if typeof json[name.resourceize()] is "undefined"
+                    json[name.resourceize()].push(record)
+              delete new_record[singleResourceName][name + "_attributes"]
+
+          fixtures[fixtureName].forEach (record) ->
+            if record.id is parseInt(putId)
+              json[resourceName] = [] if typeof json[resourceName] is "undefined"
+              $.extend(record, new_record[singleResourceName])
+              json[resourceName].push(record)
+
+          @responseText = json
+
 
         if requestType is "get"
           console.warn("Fixtures not found for Model : #{modelName}") unless fixtures[fixtureName]
-          if fixtureName is "Teams"
-            console.log "Fixtures", fixtures[fixtureName]
-            console.log "request", request
           if queryParams.length
             json[resourceName] = findRecords(fixtures,fixtureName,queryParams,request.data)
           else

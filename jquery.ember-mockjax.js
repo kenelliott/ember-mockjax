@@ -100,17 +100,23 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       url: "*",
       responseTime: 0,
       response: function(request) {
-        var emberRelationships, fixtureName, fixtures, json, modelAttributes, modelName, new_record, pathObject, queryParams, requestType, resourceName, singleResourceName;
+        var emberRelationships, fixtureName, fixtures, json, modelAttributes, modelName, new_record, pathObject, putId, queryParams, requestType, resourceName, singleResourceName;
         queryParams = [];
         json = {};
         requestType = request.type.toLowerCase();
         pathObject = parseUrl(request.url)["pathname"].split("/");
         modelName = pathObject.slice(-1).pop();
+        putId = null;
         if (/^[0-9]+$/.test(modelName)) {
-          if (typeof request.data !== "object") {
-            request.data = {};
+          if (requestType === "get") {
+            if (typeof request.data === "undefined") {
+              request.data = {};
+            }
+            request.data.ids = [modelName];
           }
-          request.data.ids = [modelName];
+          if (requestType === "put") {
+            putId = modelName;
+          }
           modelName = pathObject.slice(-2).shift().singularize().camelize().capitalize();
         } else {
           modelName = modelName.singularize().camelize().capitalize();
@@ -141,15 +147,38 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
           this.responseText = addRecord(fixtures, json, new_record, fixtureName, resourceName, singleResourceName);
         }
         if (requestType === "put") {
-          console.log("put it");
+          new_record = JSON.parse(request.data);
+          json[resourceName] = [];
+          emberRelationships.forEach(function(name, relationship) {
+            if (__indexOf.call(Object.keys(relationship.options), "nested") >= 0) {
+              if (!relationship.options.async) {
+                fixtures[name.fixtureize()].forEach(function(record) {
+                  if (record.id === parseInt(new_record[singleResourceName][name + "_attributes"].id)) {
+                    $.extend(record, new_record[singleResourceName][name + "_attributes"]);
+                    if (typeof json[name.resourceize()] === "undefined") {
+                      json[name.resourceize()] = [];
+                    }
+                    return json[name.resourceize()].push(record);
+                  }
+                });
+              }
+              return delete new_record[singleResourceName][name + "_attributes"];
+            }
+          });
+          fixtures[fixtureName].forEach(function(record) {
+            if (record.id === parseInt(putId)) {
+              if (typeof json[resourceName] === "undefined") {
+                json[resourceName] = [];
+              }
+              $.extend(record, new_record[singleResourceName]);
+              return json[resourceName].push(record);
+            }
+          });
+          this.responseText = json;
         }
         if (requestType === "get") {
           if (!fixtures[fixtureName]) {
             console.warn("Fixtures not found for Model : " + modelName);
-          }
-          if (fixtureName === "Teams") {
-            console.log("Fixtures", fixtures[fixtureName]);
-            console.log("request", request);
           }
           if (queryParams.length) {
             json[resourceName] = findRecords(fixtures, fixtureName, queryParams, request.data);

@@ -49,6 +49,6 @@ DS.ActiveModelSerializer.reopen
     if Ember.isNone(belongsTo)
       json[key] = belongsTo
     else
-      return json[key.replace("_id", "") + "_attributes"] = record.get(relationship.key).serialize() if nested
+      return json[key.replace("_id", "") + "_attributes"] = record.get(relationship.key).serialize(includeId: true) if nested
       json[key] = Ember.get(belongsTo, "id")
     @serializePolymorphicType record, json, relationship  if relationship.options.polymorphic
