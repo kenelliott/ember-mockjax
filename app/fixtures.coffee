@@ -4,14 +4,12 @@ App.Fixtures.Teams = [
 	id: 1
 	name: "Blue Team"
 	squad_ids: [1,2]
-	active: true
-	wild: true
+	archived_at: null
 ,
 	id: 2
 	name: "Red Team"
 	squad_ids: [3,4]
-	active: false
-	wild: true
+	archived_at: null
 ]
 
 App.Fixtures.Squads = [

@@ -1,7 +1,7 @@
 var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 (function($) {
-  $.emberMockJax = function(options) {
+  return $.emberMockJax = function(options) {
     var addRecord, addRelatedRecord, config, findRecords, log, parseUrl, settings, sideloadRecords, uniqueArray;
     config = {
       fixtures: {},
@@ -22,15 +22,24 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
     };
     findRecords = function(fixtures, fixtureName, queryParams, requestData) {
       return fixtures[fixtureName].filter(function(element, index) {
-        var matches, param, _i, _len, _ref, _ref1;
+        var bool, matches, param, _i, _len, _ref, _ref1;
         matches = 0;
         for (_i = 0, _len = queryParams.length; _i < _len; _i++) {
           param = queryParams[_i];
-          if (!requestData[param]) {
+          if (requestData[param] == null) {
             continue;
           }
           if (typeof requestData[param] === "object") {
             if ((_ref = element[param.singularize()].toString(), __indexOf.call(requestData[param], _ref) >= 0) || (_ref1 = element[param.singularize()], __indexOf.call(requestData[param], _ref1) >= 0)) {
+              matches += 1;
+            }
+          } else if (typeof requestData[param] === "boolean") {
+            if ((element[param] != null) === true) {
+              bool = true;
+            } else {
+              bool = false;
+            }
+            if (requestData[param] === bool) {
               matches += 1;
             }
           } else {
@@ -198,7 +207,6 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       }
     });
   };
-  return null;
 })(jQuery);
 
 /*
