@@ -161,8 +161,8 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
                     return json[name.resourceize()].push(record);
                   }
                 });
+                return delete new_record[singleResourceName][name + "_attributes"];
               }
-              return delete new_record[singleResourceName][name + "_attributes"];
             }
           });
           fixtures[fixtureName].forEach(function(record) {

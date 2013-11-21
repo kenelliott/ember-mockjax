@@ -126,7 +126,7 @@
                     $.extend(record, new_record[singleResourceName][name + "_attributes"])
                     json[name.resourceize()] = [] if typeof json[name.resourceize()] is "undefined"
                     json[name.resourceize()].push(record)
-              delete new_record[singleResourceName][name + "_attributes"]
+                delete new_record[singleResourceName][name + "_attributes"]
 
           fixtures[fixtureName].forEach (record) ->
             if record.id is parseInt(putId)
