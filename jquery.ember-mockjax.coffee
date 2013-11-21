@@ -153,7 +153,7 @@
           @responseText = json
 
         console.log "MOCKJAX RESPONSE:", @responseText
-
+  null
 ) jQuery
 
 # if keys.length

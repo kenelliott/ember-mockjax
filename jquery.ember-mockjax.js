@@ -1,7 +1,7 @@
 var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 (function($) {
-  return $.emberMockJax = function(options) {
+  $.emberMockJax = function(options) {
     var addRecord, addRelatedRecord, config, findRecords, log, parseUrl, settings, sideloadRecords, uniqueArray;
     config = {
       fixtures: {},
@@ -198,6 +198,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       }
     });
   };
+  return null;
 })(jQuery);
 
 /*
