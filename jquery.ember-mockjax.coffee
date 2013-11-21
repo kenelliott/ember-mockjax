@@ -63,6 +63,7 @@
     addRecord = (fixtures, json, new_record, fixtureName, resourceName, singleResourceName) ->
       duplicated_record = $.extend(true, {}, fixtures[fixtureName].slice(-1).pop())
       duplicated_record.id = parseInt(duplicated_record.id) + 1
+      duplicated_record.archived_at = null
       $.extend(duplicated_record, new_record[singleResourceName])
       fixtures[fixtureName].push(duplicated_record)
       json[resourceName].push(duplicated_record)
