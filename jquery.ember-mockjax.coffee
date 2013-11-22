@@ -1,7 +1,7 @@
 (($) ->
 
   $.emberMockJax = (options) ->
-    log("MOCKJAX setup:", options)
+    console.log("MOCKJAX setup:", options)
 
     # defaults
     config =
@@ -81,7 +81,7 @@
       responseTime: 0
       response: (request) ->
 
-        log "MOCKJAX RequestData:", request
+        console.log "MOCKJAX RequestData:", request
 
         queryParams             = []
         json                    = {}
