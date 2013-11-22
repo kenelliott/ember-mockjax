@@ -3,7 +3,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
 (function($) {
   return $.emberMockJax = function(options) {
     var addRecord, addRelatedRecord, config, findRecords, log, parseUrl, settings, sideloadRecords, uniqueArray;
-    console.log("MOCKJAX setup:", options);
+    Ember.debug(options.toString());
     config = {
       fixtures: {},
       urls: ["*"],
@@ -112,7 +112,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       responseTime: 0,
       response: function(request) {
         var emberRelationships, fixtureName, fixtures, json, modelAttributes, modelName, new_record, pathObject, putId, queryParams, requestType, resourceName, singleResourceName;
-        console.log("MOCKJAX RequestData:", request);
+        Ember.debug(request.toString());
         queryParams = [];
         json = {};
         requestType = request.type.toLowerCase();

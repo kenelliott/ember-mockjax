@@ -1,7 +1,7 @@
 (($) ->
 
   $.emberMockJax = (options) ->
-    console.log("MOCKJAX setup:", options)
+    Ember.debug(options.toString())
 
     # defaults
     config =
@@ -81,7 +81,7 @@
       responseTime: 0
       response: (request) ->
 
-        console.log "MOCKJAX RequestData:", request
+        Ember.debug(request.toString())
 
         queryParams             = []
         json                    = {}
