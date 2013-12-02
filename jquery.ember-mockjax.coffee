@@ -1,8 +1,6 @@
 (($) ->
 
   $.emberMockJax = (options) ->
-    console.log("emberMockjax Initialized")
-
     # defaults
     config =
       fixtures: {}
@@ -80,9 +78,6 @@
       url: "*"
       responseTime: 0
       response: (request) ->
-
-        console.log "EmberMockjax ajax request found"
-
         queryParams             = []
         json                    = {}
 
