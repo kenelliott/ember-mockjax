@@ -154,5 +154,5 @@
 
           @responseText = json
 
-        console.log "MOCKJAX RESPONSE:", @responseText
+        console.log "MOCK RSP:", @responseText
 ) jQuery
