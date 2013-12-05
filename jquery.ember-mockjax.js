@@ -163,15 +163,15 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
             if (__indexOf.call(Object.keys(relationship.options), "nested") >= 0) {
               if (!relationship.options.async) {
                 fixtures[name.fixtureize()].forEach(function(record) {
-                  if (record.id === parseInt(new_record[singleResourceName][name + "_attributes"].id)) {
-                    $.extend(record, new_record[singleResourceName][name + "_attributes"]);
+                  if (record.id === parseInt(new_record[singleResourceName][name.resourceize() + "_attributes"].id)) {
+                    $.extend(record, new_record[singleResourceName][name.resourceize() + "_attributes"]);
                     if (typeof json[name.resourceize()] === "undefined") {
                       json[name.resourceize()] = [];
                     }
                     return json[name.resourceize()].push(record);
                   }
                 });
-                return delete new_record[singleResourceName][name + "_attributes"];
+                return delete new_record[singleResourceName][name.resourceize() + "_attributes"];
               }
             }
           });
