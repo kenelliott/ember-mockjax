@@ -154,5 +154,5 @@
 
           @responseText = json
 
-        console.log "MOCK RSP:", @responseText
+        console.log "MOCK RSP:", request.url, @responseText
 ) jQuery

@@ -204,7 +204,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
           });
           this.responseText = json;
         }
-        return console.log("MOCK RSP:", this.responseText);
+        return console.log("MOCK RSP:", request.url, this.responseText);
       }
     });
   };
