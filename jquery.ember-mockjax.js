@@ -67,7 +67,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       params = [];
       res = [];
       parent.forEach(function(record) {
-        return $.merge(res, record[name.singularize() + "_ids"]);
+        return $.merge(res, record[name.underscore().singularize() + "_ids"]);
       });
       params["ids"] = uniqueArray(res);
       return findRecords(fixtures, name.capitalize(), ["ids"], params);
