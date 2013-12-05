@@ -43,7 +43,7 @@
       params = []
       res = []
       parent.forEach (record) ->
-        $.merge(res, record[name.singularize() + "_ids"])
+        $.merge(res, record[name.underscore().singularize() + "_ids"])
 
       params["ids"] = uniqueArray res
       findRecords(fixtures,name.capitalize(),["ids"],params)
