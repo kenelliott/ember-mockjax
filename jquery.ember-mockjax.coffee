@@ -125,11 +125,11 @@
             if "nested" in Object.keys(relationship.options)
               unless relationship.options.async
                 fixtures[name.fixtureize()].forEach (record) ->
-                  if record.id is parseInt(new_record[singleResourceName][name.resourceize() + "_attributes"].id)
-                    $.extend(record, new_record[singleResourceName][name.resourceize() + "_attributes"])
+                  if record.id is parseInt(new_record[singleResourceName][name.underscore() + "_attributes"].id)
+                    $.extend(record, new_record[singleResourceName][name.underscore() + "_attributes"])
                     json[name.resourceize()] = [] if typeof json[name.resourceize()] is "undefined"
                     json[name.resourceize()].push(record)
-                delete new_record[singleResourceName][name.resourceize() + "_attributes"]
+                delete new_record[singleResourceName][name.underscore() + "_attributes"]
 
           fixtures[fixtureName].forEach (record) ->
             if record.id is parseInt(putId)
