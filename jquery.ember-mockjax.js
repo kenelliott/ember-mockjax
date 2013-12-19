@@ -2,7 +2,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
 
 (function($) {
   return $.emberMockJax = function(options) {
-    var addRecord, addRelatedRecord, config, findRecords, log, parseUrl, settings, sideloadRecords, uniqueArray;
+    var addRecord, addRelatedRecord, allPropsNull, buildErrorObject, config, findRecords, flattenObject, log, parseUrl, settings, sideloadRecords, uniqueArray;
     config = {
       fixtures: {},
       urls: ["*"],
@@ -96,6 +96,63 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       json[resourceName].push(duplicated_record);
       return json;
     };
+    allPropsNull = function(obj, msg) {
+      return Object.keys(obj).every(function(key) {
+        if (obj[key] !== null) {
+          if (typeof obj[key] === "object") {
+            return allPropsNull(obj[key]);
+          }
+        } else {
+          return true;
+        }
+      });
+    };
+    flattenObject = function(obj, result) {
+      var keys;
+      if (!result) {
+        result = {};
+      }
+      keys = Object.keys(obj);
+      keys.forEach(function(key) {
+        if (obj[key] === null) {
+          return delete obj[key];
+        } else if (typeof obj[key] === "object") {
+          return result = flattenObject(obj[key], result);
+        } else {
+          return result[key] = obj[key];
+        }
+      });
+      return result;
+    };
+    buildErrorObject = function(obj, msg) {
+      var rootKey, setErrorMessages;
+      setErrorMessages = function(obj, msg, parentKeys) {
+        var path;
+        if (!parentKeys) {
+          parentKeys = [];
+          path = "";
+        }
+        Object.keys(obj).every(function(key) {
+          if (obj[key] !== null) {
+            if (typeof obj[key] === "object") {
+              parentKeys.push(key.replace("_attributes", ""));
+              return obj[key] = setErrorMessages(obj[key], msg, parentKeys);
+            }
+          } else {
+            if (parentKeys.length) {
+              path = parentKeys.join(".") + ".";
+            }
+            return obj["" + path + key] = "" + key + " " + msg;
+          }
+        });
+        return obj;
+      };
+      rootKey = Object.keys(obj).pop();
+      setErrorMessages(obj[rootKey], msg);
+      obj["errors"] = flattenObject(obj[rootKey]);
+      delete obj[rootKey];
+      return obj;
+    };
     String.prototype.fixtureize = function() {
       if (typeof name === "string") {
         return this.camelize().capitalize().pluralize();
@@ -146,6 +203,9 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
         });
         if (requestType === "post") {
           new_record = JSON.parse(request.data);
+          if (allPropsNull(request.data)) {
+            return buildErrorObject(request.data, "cannot be null");
+          }
           json[resourceName] = [];
           emberRelationships.forEach(function(name, relationship) {
             if (__indexOf.call(Object.keys(relationship.options), "nested") >= 0) {

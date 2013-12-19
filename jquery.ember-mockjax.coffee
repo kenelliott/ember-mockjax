@@ -68,6 +68,46 @@
       json[resourceName].push(duplicated_record)
       json
 
+    allPropsNull = (obj,msg) ->
+      Object.keys(obj).every (key) ->
+        if obj[key] isnt null
+          allPropsNull obj[key] if typeof obj[key] is "object"
+        else
+          true
+    flattenObject = (obj,result) ->
+      result = {} unless result
+      keys = Object.keys(obj)
+      keys.forEach (key) ->
+        if obj[key] is null
+          delete obj[key]
+        else if typeof obj[key] is "object"
+          result = flattenObject(obj[key],result)
+        else
+          result[key] = obj[key]
+      result
+
+    buildErrorObject = (obj, msg) ->
+      setErrorMessages = (obj, msg, parentKeys) ->
+        unless parentKeys
+          parentKeys = []
+          path = ""
+
+        Object.keys(obj).every (key) ->
+          if obj[key] isnt null
+            if typeof obj[key] is "object"
+              parentKeys.push(key.replace("_attributes",""))
+              obj[key] = setErrorMessages(obj[key], msg, parentKeys)
+          else
+            path = parentKeys.join(".") + "." if parentKeys.length
+            obj["#{path}#{key}"] = "#{key} #{msg}"
+        obj
+
+      rootKey = Object.keys(obj).pop()
+      setErrorMessages(obj[rootKey],msg)
+      obj["errors"] = flattenObject(obj[rootKey])
+      delete obj[rootKey]
+      obj
+
     String::fixtureize = ->
       this.camelize().capitalize().pluralize() if typeof name is "string"
 
@@ -110,6 +150,11 @@
 
         if requestType is "post"
           new_record = JSON.parse(request.data)
+
+          # return error object if all values are null
+          if allPropsNull(request.data)
+            return buildErrorObject(request.data, "cannot be null")
+
           json[resourceName] = []
           emberRelationships.forEach (name,relationship) ->
             if "nested" in Object.keys(relationship.options)
