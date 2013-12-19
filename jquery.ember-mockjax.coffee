@@ -152,7 +152,7 @@
           new_record = JSON.parse(request.data)
 
           # return error object if all values are null
-          if allPropsNull(request.data)
+          if allPropsNull(new_record)
             return buildErrorObject(request.data, "cannot be null")
 
           json[resourceName] = []
