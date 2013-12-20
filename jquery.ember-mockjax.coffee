@@ -153,6 +153,7 @@
 
           # return error object if all values are null
           if allPropsNull(new_record)
+            @status = 422
             @responseText = buildErrorObject(new_record, "cannot be null")
           else
             json[resourceName] = []

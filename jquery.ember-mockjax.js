@@ -203,6 +203,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
         if (requestType === "post") {
           new_record = JSON.parse(request.data);
           if (allPropsNull(new_record)) {
+            this.status = 422;
             this.responseText = buildErrorObject(new_record, "cannot be null");
           } else {
             json[resourceName] = [];
