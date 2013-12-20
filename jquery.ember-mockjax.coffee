@@ -153,7 +153,8 @@
 
           # return error object if all values are null
           if allPropsNull(new_record)
-            return buildErrorObject(request.data, "cannot be null")
+            @responseText = buildErrorObject(new_record, "cannot be null")
+            return
 
           json[resourceName] = []
           emberRelationships.forEach (name,relationship) ->

@@ -203,7 +203,8 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
         if (requestType === "post") {
           new_record = JSON.parse(request.data);
           if (allPropsNull(new_record)) {
-            return buildErrorObject(request.data, "cannot be null");
+            this.responseText = buildErrorObject(new_record, "cannot be null");
+            return;
           }
           json[resourceName] = [];
           emberRelationships.forEach(function(name, relationship) {
