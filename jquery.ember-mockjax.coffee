@@ -154,15 +154,14 @@
           # return error object if all values are null
           if allPropsNull(new_record)
             @responseText = buildErrorObject(new_record, "cannot be null")
-            return
+          else
+            json[resourceName] = []
+            emberRelationships.forEach (name,relationship) ->
+              if "nested" in Object.keys(relationship.options)
+                unless relationship.options.async
+                  json = addRelatedRecord(fixtures,json,name,new_record,singleResourceName)
 
-          json[resourceName] = []
-          emberRelationships.forEach (name,relationship) ->
-            if "nested" in Object.keys(relationship.options)
-              unless relationship.options.async
-                json = addRelatedRecord(fixtures,json,name,new_record,singleResourceName)
-
-          @responseText = addRecord(fixtures,json,new_record,fixtureName,resourceName,singleResourceName)
+            @responseText = addRecord(fixtures,json,new_record,fixtureName,resourceName,singleResourceName)
 
         if requestType is "put"
           new_record = JSON.parse(request.data)

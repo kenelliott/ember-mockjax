@@ -204,17 +204,17 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
           new_record = JSON.parse(request.data);
           if (allPropsNull(new_record)) {
             this.responseText = buildErrorObject(new_record, "cannot be null");
-            return;
-          }
-          json[resourceName] = [];
-          emberRelationships.forEach(function(name, relationship) {
-            if (__indexOf.call(Object.keys(relationship.options), "nested") >= 0) {
-              if (!relationship.options.async) {
-                return json = addRelatedRecord(fixtures, json, name, new_record, singleResourceName);
+          } else {
+            json[resourceName] = [];
+            emberRelationships.forEach(function(name, relationship) {
+              if (__indexOf.call(Object.keys(relationship.options), "nested") >= 0) {
+                if (!relationship.options.async) {
+                  return json = addRelatedRecord(fixtures, json, name, new_record, singleResourceName);
+                }
               }
-            }
-          });
-          this.responseText = addRecord(fixtures, json, new_record, fixtureName, resourceName, singleResourceName);
+            });
+            this.responseText = addRecord(fixtures, json, new_record, fixtureName, resourceName, singleResourceName);
+          }
         }
         if (requestType === "put") {
           new_record = JSON.parse(request.data);
