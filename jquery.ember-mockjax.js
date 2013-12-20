@@ -2,7 +2,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
 
 (function($) {
   return $.emberMockJax = function(options) {
-    var addRecord, addRelatedRecord, allPropsNull, buildErrorObject, config, findRecords, flattenObject, log, parseUrl, settings, sideloadRecords, uniqueArray;
+    var addRecord, addRelatedRecord, allPropsNull, buildErrorObject, config, findRecords, flattenObject, log, parseUrl, setErrorMessages, settings, sideloadRecords, uniqueArray;
     config = {
       fixtures: {},
       urls: ["*"],
@@ -124,32 +124,31 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       });
       return result;
     };
-    buildErrorObject = function(obj, msg) {
-      var rootKey, setErrorMessages;
-      setErrorMessages = function(obj, msg, parentKeys) {
-        var path;
-        if (!parentKeys) {
-          parentKeys = [];
-          path = "";
-        }
-        Object.keys(obj).every(function(key) {
-          if (obj[key] !== null) {
-            if (typeof obj[key] === "object") {
-              parentKeys.push(key.replace("_attributes", ""));
-              return obj[key] = setErrorMessages(obj[key], msg, parentKeys);
-            }
-          } else {
-            if (parentKeys.length) {
-              path = parentKeys.join(".") + ".";
-            }
-            return obj["" + path + key] = "" + key + " " + msg;
+    setErrorMessages = function(obj, msg, parentKeys) {
+      var path;
+      if (!parentKeys) {
+        parentKeys = [];
+        path = "";
+      }
+      Object.keys(obj).every(function(key) {
+        if (obj[key] !== null) {
+          if (typeof obj[key] === "object") {
+            parentKeys.push(key.replace("_attributes", ""));
+            return obj[key] = setErrorMessages(obj[key], msg, parentKeys);
           }
-        });
-        return obj;
-      };
+        } else {
+          if (parentKeys.length) {
+            path = parentKeys.join(".") + ".";
+          }
+          return obj["" + path + key] = "" + key + " " + msg;
+        }
+      });
+      return obj;
+    };
+    buildErrorObject = function(obj, msg) {
+      var rootKey;
       rootKey = Object.keys(obj).pop();
-      setErrorMessages(obj[rootKey], msg);
-      obj["errors"] = flattenObject(obj[rootKey]);
+      obj["errors"] = flattenObject(setErrorMessages(obj[rootKey], msg));
       delete obj[rootKey];
       return obj;
     };

@@ -74,6 +74,7 @@
           allPropsNull obj[key] if typeof obj[key] is "object"
         else
           true
+
     flattenObject = (obj,result) ->
       result = {} unless result
       keys = Object.keys(obj)
@@ -86,25 +87,24 @@
           result[key] = obj[key]
       result
 
-    buildErrorObject = (obj, msg) ->
-      setErrorMessages = (obj, msg, parentKeys) ->
-        unless parentKeys
+    setErrorMessages = (obj, msg, parentKeys) ->
+      unless parentKeys
           parentKeys = []
           path = ""
 
-        Object.keys(obj).every (key) ->
-          if obj[key] isnt null
-            if typeof obj[key] is "object"
-              parentKeys.push(key.replace("_attributes",""))
-              obj[key] = setErrorMessages(obj[key], msg, parentKeys)
-          else
-            path = parentKeys.join(".") + "." if parentKeys.length
-            obj["#{path}#{key}"] = "#{key} #{msg}"
-        obj
+      Object.keys(obj).every (key) ->
+        if obj[key] isnt null
+          if typeof obj[key] is "object"
+            parentKeys.push(key.replace("_attributes",""))
+            obj[key] = setErrorMessages(obj[key], msg, parentKeys)
+        else
+          path = parentKeys.join(".") + "." if parentKeys.length
+          obj["#{path}#{key}"] = "#{key} #{msg}"
+      obj
 
+    buildErrorObject = (obj, msg) ->
       rootKey = Object.keys(obj).pop()
-      setErrorMessages(obj[rootKey],msg)
-      obj["errors"] = flattenObject(obj[rootKey])
+      obj["errors"] = flattenObject(setErrorMessages(obj[rootKey],msg))
       delete obj[rootKey]
       obj
 
