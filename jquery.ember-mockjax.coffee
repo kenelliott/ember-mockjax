@@ -84,7 +84,7 @@
         else if typeof obj[key] is "object"
           result = flattenObject(obj[key],result)
         else
-          result[key] = obj[key]
+          result[key] = [obj[key]]
       result
 
     setErrorMessages = (obj, msg, parentKeys) ->

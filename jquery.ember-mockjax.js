@@ -119,7 +119,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
         } else if (typeof obj[key] === "object") {
           return result = flattenObject(obj[key], result);
         } else {
-          return result[key] = obj[key];
+          return result[key] = [obj[key]];
         }
       });
       return result;
