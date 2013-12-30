@@ -204,7 +204,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
           new_record = JSON.parse(request.data);
           if (allPropsNull(new_record)) {
             this.status = 422;
-            this.responseText = buildErrorObject(new_record, "cannot be null");
+            this.responseText = buildErrorObject(new_record, "cannot be empty.");
           } else {
             json[resourceName] = [];
             emberRelationships.forEach(function(name, relationship) {
