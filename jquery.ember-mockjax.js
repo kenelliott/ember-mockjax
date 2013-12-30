@@ -140,7 +140,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
           if (parentKeys.length) {
             path = parentKeys.join(".") + ".";
           }
-          return obj["" + path + key] = "" + key + " " + msg;
+          return obj["" + path + key] = "" + msg;
         }
       });
       return obj;

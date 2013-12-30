@@ -99,7 +99,7 @@
             obj[key] = setErrorMessages(obj[key], msg, parentKeys)
         else
           path = parentKeys.join(".") + "." if parentKeys.length
-          obj["#{path}#{key}"] = "#{key} #{msg}"
+          obj["#{path}#{key}"] = "#{msg}"
       obj
 
     buildErrorObject = (obj, msg) ->
