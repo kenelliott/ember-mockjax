@@ -93,7 +93,7 @@
           path = ""
 
       Object.keys(obj).every (key) ->
-        if obj[key] isnt null and key isnt "archived"
+        if obj[key] isnt null and typeof obj[key] isnt "boolean"
           if typeof obj[key] is "object"
             parentKeys.push(key.replace("_attributes",""))
             obj[key] = setErrorMessages(obj[key], msg, parentKeys)
