@@ -131,7 +131,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
         path = "";
       }
       Object.keys(obj).every(function(key) {
-        if (obj[key] !== null) {
+        if (obj[key] !== null && key !== "archived") {
           if (typeof obj[key] === "object") {
             parentKeys.push(key.replace("_attributes", ""));
             return obj[key] = setErrorMessages(obj[key], msg, parentKeys);
