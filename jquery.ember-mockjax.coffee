@@ -27,7 +27,7 @@
               matches += 1
           else if typeof requestData[param] is "boolean"
             if element[param]? == true then bool = true else bool = false
-            if requestData[param] == bool
+            if bool && requestData[param] == element[param]
               matches += 1
           else
             matches += 1 if requestData[param] = element[param]
@@ -69,6 +69,7 @@
       json
 
     allPropsNull = (obj,msg) ->
+      delete obj.archived
       Object.keys(obj).every (key) ->
         if obj[key] isnt null
           allPropsNull obj[key] if typeof obj[key] is "object"
