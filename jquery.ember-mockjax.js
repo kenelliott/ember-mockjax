@@ -97,9 +97,8 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       return json;
     };
     allPropsNull = function(obj, msg) {
-      delete obj.archived;
       return Object.keys(obj).every(function(key) {
-        if (obj[key] !== null) {
+        if (obj[key] !== null && key !== "archived") {
           if (typeof obj[key] === "object") {
             return allPropsNull(obj[key]);
           }

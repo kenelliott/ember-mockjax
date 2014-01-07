@@ -69,9 +69,8 @@
       json
 
     allPropsNull = (obj,msg) ->
-      delete obj.archived
       Object.keys(obj).every (key) ->
-        if obj[key] isnt null
+        if obj[key] isnt null and key isnt "archived"
           allPropsNull obj[key] if typeof obj[key] is "object"
         else
           true
