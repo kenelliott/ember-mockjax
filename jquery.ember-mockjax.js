@@ -39,7 +39,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
             } else {
               bool = false;
             }
-            if (requestData[param] === bool) {
+            if (bool && requestData[param] === element[param]) {
               matches += 1;
             }
           } else {
@@ -97,6 +97,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       return json;
     };
     allPropsNull = function(obj, msg) {
+      delete obj.archived;
       return Object.keys(obj).every(function(key) {
         if (obj[key] !== null) {
           if (typeof obj[key] === "object") {
