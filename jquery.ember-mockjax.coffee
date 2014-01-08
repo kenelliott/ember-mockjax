@@ -25,10 +25,6 @@
           if typeof requestData[param] is "object"
             if element[param.singularize()].toString() in requestData[param] or element[param.singularize()] in requestData[param]
               matches += 1
-          else if typeof requestData[param] is "boolean"
-            if element[param]? == true then bool = true else bool = false
-            if requestData[param] == bool
-              matches += 1
           else
             matches += 1 if requestData[param] == element[param]
         true if matches == queryParams.length
