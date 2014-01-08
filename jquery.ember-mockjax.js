@@ -39,11 +39,11 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
             } else {
               bool = false;
             }
-            if (bool && requestData[param] === element[param]) {
+            if (requestData[param] === bool) {
               matches += 1;
             }
           } else {
-            if (requestData[param] = element[param]) {
+            if (requestData[param] === element[param]) {
               matches += 1;
             }
           }

@@ -27,10 +27,10 @@
               matches += 1
           else if typeof requestData[param] is "boolean"
             if element[param]? == true then bool = true else bool = false
-            if bool && requestData[param] == element[param]
+            if requestData[param] == bool
               matches += 1
           else
-            matches += 1 if requestData[param] = element[param]
+            matches += 1 if requestData[param] == element[param]
         true if matches == queryParams.length
 
     uniqueArray = (arr) ->
