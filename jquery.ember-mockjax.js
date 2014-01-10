@@ -52,13 +52,17 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
         return $.inArray(v, arr) === k;
       });
     };
-    sideloadRecords = function(fixtures, name, parent) {
+    sideloadRecords = function(fixtures, name, parent, kind) {
       var params, res, temp;
       temp = [];
       params = [];
       res = [];
       parent.forEach(function(record) {
-        return $.merge(res, record[name.underscore().singularize() + "_ids"]);
+        if (kind === "belongsTo") {
+          return res.push(record[name.underscore().singularize() + "_id"]);
+        } else {
+          return $.merge(res, record[name.underscore().singularize() + "_ids"]);
+        }
       });
       params["ids"] = uniqueArray(res);
       return findRecords(fixtures, name.capitalize(), ["ids"], params);
@@ -250,7 +254,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
           emberRelationships.forEach(function(name, relationship) {
             if (__indexOf.call(Object.keys(relationship.options), "async") >= 0) {
               if (!relationship.options.async) {
-                return json[name] = sideloadRecords(fixtures, name, json[resourceName]);
+                return json[name.pluralize()] = sideloadRecords(fixtures, name, json[resourceName], relationship.kind);
               }
             }
           });

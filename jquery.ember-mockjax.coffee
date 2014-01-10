@@ -34,12 +34,15 @@
       $.grep arr, (v, k) ->
         $.inArray(v ,arr) == k
 
-    sideloadRecords = (fixtures, name, parent) ->
+    sideloadRecords = (fixtures, name, parent, kind) ->
       temp = []
       params = []
       res = []
       parent.forEach (record) ->
-        $.merge(res, record[name.underscore().singularize() + "_ids"])
+        if kind is "belongsTo"
+          res.push record[name.underscore().singularize() + "_id"]
+        else
+          $.merge(res, record[name.underscore().singularize() + "_ids"])
 
       params["ids"] = uniqueArray res
       findRecords(fixtures,name.capitalize(),["ids"],params)
@@ -192,7 +195,7 @@
             # async = false / sideload records
             if "async" in Object.keys(relationship.options)
               unless relationship.options.async
-                json[name] = sideloadRecords(fixtures,name,json[resourceName])
+                json[name.pluralize()] = sideloadRecords(fixtures,name,json[resourceName],relationship.kind)
 
           @responseText = json
 
