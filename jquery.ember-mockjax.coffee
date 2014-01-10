@@ -45,7 +45,7 @@
           $.merge(res, record[name.underscore().singularize() + "_ids"])
 
       params["ids"] = uniqueArray res
-      findRecords(fixtures,name.capitalize(),["ids"],params)
+      findRecords(fixtures,name.capitalize().pluralize(),["ids"],params)
 
     addRelatedRecord = (fixtures, json, name, new_record, singleResourceName) ->
       json[name.resourceize()] = [] unless typeof json[name.resourceize()] is "object"

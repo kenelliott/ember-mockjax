@@ -65,7 +65,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
         }
       });
       params["ids"] = uniqueArray(res);
-      return findRecords(fixtures, name.capitalize(), ["ids"], params);
+      return findRecords(fixtures, name.capitalize().pluralize(), ["ids"], params);
     };
     addRelatedRecord = function(fixtures, json, name, new_record, singleResourceName) {
       var duplicated_record;
