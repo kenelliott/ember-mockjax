@@ -69,7 +69,7 @@
 
     allPropsNull = (obj,msg) ->
       Object.keys(obj).every (key) ->
-        if obj[key] isnt null and key isnt "archived"
+        if obj[key] isnt null and key isnt "archived" and key isnt "type"
           allPropsNull obj[key] if typeof obj[key] is "object"
         else
           true
