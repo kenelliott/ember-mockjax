@@ -21,6 +21,7 @@
       fixtures[fixtureName].filter (element, index) ->
         matches = 0
         for param in queryParams
+          param.replace("by_","")
           continue unless requestData[param]?
           if typeof requestData[param] is "object"
             if element[param.singularize()].toString() in requestData[param] or element[param.singularize()] in requestData[param]

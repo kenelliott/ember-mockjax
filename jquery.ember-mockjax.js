@@ -26,6 +26,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
         matches = 0;
         for (_i = 0, _len = queryParams.length; _i < _len; _i++) {
           param = queryParams[_i];
+          param.replace("by_", "");
           if (requestData[param] == null) {
             continue;
           }
