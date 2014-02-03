@@ -24,10 +24,10 @@
           scope_param = param.replace "by_", ""
           continue unless requestData[param]?
           if typeof requestData[param] is "object"
-            if element[clean_param.singularize()].toString() in requestData[param] or element[clean_param.singularize()] in requestData[param]
+            if element[scope_param.singularize()].toString() in requestData[param] or element[scope_param.singularize()] in requestData[param]
               matches += 1
           else
-            matches += 1 if requestData[param] == element[clean_param.singularize()]
+            matches += 1 if requestData[param] == element[scope_param.singularize()]
         true if matches == queryParams.length
 
     uniqueArray = (arr) ->

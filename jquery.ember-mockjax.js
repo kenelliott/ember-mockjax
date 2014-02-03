@@ -31,11 +31,11 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
             continue;
           }
           if (typeof requestData[param] === "object") {
-            if ((_ref = element[clean_param.singularize()].toString(), __indexOf.call(requestData[param], _ref) >= 0) || (_ref1 = element[clean_param.singularize()], __indexOf.call(requestData[param], _ref1) >= 0)) {
+            if ((_ref = element[scope_param.singularize()].toString(), __indexOf.call(requestData[param], _ref) >= 0) || (_ref1 = element[scope_param.singularize()], __indexOf.call(requestData[param], _ref1) >= 0)) {
               matches += 1;
             }
           } else {
-            if (requestData[param] === element[clean_param.singularize()]) {
+            if (requestData[param] === element[scope_param.singularize()]) {
               matches += 1;
             }
           }
