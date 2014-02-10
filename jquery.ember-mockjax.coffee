@@ -48,14 +48,33 @@
       findRecords(fixtures,name.capitalize().pluralize(),["ids"],params)
 
     addRelatedRecord = (fixtures, json, name, new_record, singleResourceName) ->
-      json[name.resourceize()] = [] unless typeof json[name.resourceize()] is "object"
+      json[name.resourceize()] = [] if typeof json[name.resourceize()] isnt "object"
       duplicated_record = $.extend(true, {}, fixtures[name.fixtureize()].slice(-1).pop())
       duplicated_record.id = parseInt(duplicated_record.id) + 1
-      $.extend(duplicated_record,new_record[singleResourceName][name + "_attributes"])
+      $.extend(duplicated_record,new_record[singleResourceName][name.resourceize() + "_attributes"])
       fixtures[name.fixtureize()].push(duplicated_record)
-      delete new_record[singleResourceName][name + "_attributes"]
-      new_record[singleResourceName][name + "_id"] = duplicated_record.id
+      delete new_record[singleResourceName][name.resourceize() + "_attributes"]
+      new_record[singleResourceName][name.resourceize().singularize() + "_id"] = duplicated_record.id
       json[name.resourceize()].push(duplicated_record)
+      json
+
+    addRelatedRecords = (fixtures, json, name, new_record, singleResourceName) ->
+      duplicated_record = undefined
+      json[name.resourceize()] = []  if typeof json[name.resourceize()] isnt "object"
+      new_record[singleResourceName][name.resourceize().singularize() + "_ids"] = []
+      new_record[singleResourceName][name.resourceize() + "_attributes"].forEach (record) ->
+        duplicated_record = $.extend(true, {}, fixtures[name.fixtureize()].slice(-1).pop())
+        delete record.id
+
+        $.extend duplicated_record, record
+        duplicated_record.id = parseInt(duplicated_record.id) + 1
+        fixtures[name.fixtureize()].push duplicated_record
+        new_record[singleResourceName][name.resourceize().singularize() + "_ids"].push duplicated_record.id
+        json[name.resourceize()].push duplicated_record
+        return
+
+      delete new_record[singleResourceName][name.resourceize() + "_attributes"]
+
       json
 
     addRecord = (fixtures, json, new_record, fixtureName, resourceName, singleResourceName) ->
@@ -159,7 +178,11 @@
             emberRelationships.forEach (name,relationship) ->
               if "nested" in Object.keys(relationship.options)
                 unless relationship.options.async
-                  json = addRelatedRecord(fixtures,json,name,new_record,singleResourceName)
+                  if relationship.kind is "hasMany"
+                    json = addRelatedRecords(fixtures,json,name,new_record,singleResourceName)
+                  else
+                    json = addRelatedRecord(fixtures,json,name,new_record,singleResourceName)
+
 
             @responseText = addRecord(fixtures,json,new_record,fixtureName,resourceName,singleResourceName)
 

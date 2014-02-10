@@ -2,7 +2,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
 
 (function($) {
   return $.emberMockJax = function(options) {
-    var addRecord, addRelatedRecord, allPropsNull, buildErrorObject, config, findRecords, flattenObject, log, parseUrl, setErrorMessages, settings, sideloadRecords, uniqueArray;
+    var addRecord, addRelatedRecord, addRelatedRecords, allPropsNull, buildErrorObject, config, findRecords, flattenObject, log, parseUrl, setErrorMessages, settings, sideloadRecords, uniqueArray;
     config = {
       fixtures: {},
       urls: ["*"],
@@ -22,20 +22,19 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
     };
     findRecords = function(fixtures, fixtureName, queryParams, requestData) {
       return fixtures[fixtureName].filter(function(element, index) {
-        var matches, param, scope_param, _i, _len, _ref, _ref1;
+        var matches, param, _i, _len, _ref, _ref1;
         matches = 0;
         for (_i = 0, _len = queryParams.length; _i < _len; _i++) {
           param = queryParams[_i];
-          scope_param = param.replace("by_", "");
           if (requestData[param] == null) {
             continue;
           }
           if (typeof requestData[param] === "object") {
-            if ((_ref = element[scope_param.singularize()].toString(), __indexOf.call(requestData[param], _ref) >= 0) || (_ref1 = element[scope_param.singularize()], __indexOf.call(requestData[param], _ref1) >= 0)) {
+            if ((_ref = element[param.singularize()].toString(), __indexOf.call(requestData[param], _ref) >= 0) || (_ref1 = element[param.singularize()], __indexOf.call(requestData[param], _ref1) >= 0)) {
               matches += 1;
             }
           } else {
-            if (requestData[param] === element[scope_param.singularize()]) {
+            if (requestData[param] === element[param]) {
               matches += 1;
             }
           }
@@ -75,11 +74,30 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       }
       duplicated_record = $.extend(true, {}, fixtures[name.fixtureize()].slice(-1).pop());
       duplicated_record.id = parseInt(duplicated_record.id) + 1;
-      $.extend(duplicated_record, new_record[singleResourceName][name + "_attributes"]);
+      $.extend(duplicated_record, new_record[singleResourceName][name.resourceize() + "_attributes"]);
       fixtures[name.fixtureize()].push(duplicated_record);
-      delete new_record[singleResourceName][name + "_attributes"];
-      new_record[singleResourceName][name + "_id"] = duplicated_record.id;
+      delete new_record[singleResourceName][name.resourceize() + "_attributes"];
+      new_record[singleResourceName][name.resourceize().singularize() + "_id"] = duplicated_record.id;
       json[name.resourceize()].push(duplicated_record);
+      return json;
+    };
+    addRelatedRecords = function(fixtures, json, name, new_record, singleResourceName) {
+      var duplicated_record;
+      duplicated_record = void 0;
+      if (typeof json[name.resourceize()] !== "object") {
+        json[name.resourceize()] = [];
+      }
+      new_record[singleResourceName][name.resourceize().singularize() + "_ids"] = [];
+      new_record[singleResourceName][name.resourceize() + "_attributes"].forEach(function(record) {
+        duplicated_record = $.extend(true, {}, fixtures[name.fixtureize()].slice(-1).pop());
+        delete record.id;
+        $.extend(duplicated_record, record);
+        duplicated_record.id = parseInt(duplicated_record.id) + 1;
+        fixtures[name.fixtureize()].push(duplicated_record);
+        new_record[singleResourceName][name.resourceize().singularize() + "_ids"].push(duplicated_record.id);
+        json[name.resourceize()].push(duplicated_record);
+      });
+      delete new_record[singleResourceName][name.resourceize() + "_attributes"];
       return json;
     };
     addRecord = function(fixtures, json, new_record, fixtureName, resourceName, singleResourceName) {
@@ -206,7 +224,11 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
             emberRelationships.forEach(function(name, relationship) {
               if (__indexOf.call(Object.keys(relationship.options), "nested") >= 0) {
                 if (!relationship.options.async) {
-                  return json = addRelatedRecord(fixtures, json, name, new_record, singleResourceName);
+                  if (relationship.kind === "hasMany") {
+                    return json = addRelatedRecords(fixtures, json, name, new_record, singleResourceName);
+                  } else {
+                    return json = addRelatedRecord(fixtures, json, name, new_record, singleResourceName);
+                  }
                 }
               }
             });
