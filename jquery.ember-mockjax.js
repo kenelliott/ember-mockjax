@@ -22,19 +22,20 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
     };
     findRecords = function(fixtures, fixtureName, queryParams, requestData) {
       return fixtures[fixtureName].filter(function(element, index) {
-        var matches, param, _i, _len, _ref, _ref1;
+        var matches, param, scope_param, _i, _len, _ref, _ref1;
         matches = 0;
         for (_i = 0, _len = queryParams.length; _i < _len; _i++) {
           param = queryParams[_i];
+          scope_param = param.replace("by_", "");
           if (requestData[param] == null) {
             continue;
           }
           if (typeof requestData[param] === "object") {
-            if ((_ref = element[param.singularize()].toString(), __indexOf.call(requestData[param], _ref) >= 0) || (_ref1 = element[param.singularize()], __indexOf.call(requestData[param], _ref1) >= 0)) {
+            if ((_ref = element[scope_param.singularize()].toString(), __indexOf.call(requestData[param], _ref) >= 0) || (_ref1 = element[scope_param.singularize()], __indexOf.call(requestData[param], _ref1) >= 0)) {
               matches += 1;
             }
           } else {
-            if (requestData[param] === element[param]) {
+            if (requestData[param] === element[scope_param.singularize()]) {
               matches += 1;
             }
           }
