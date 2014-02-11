@@ -51,10 +51,10 @@
       json[name.resourceize()] = [] if typeof json[name.resourceize()] isnt "object"
       duplicated_record = $.extend(true, {}, fixtures[name.fixtureize()].slice(-1).pop())
       duplicated_record.id = parseInt(duplicated_record.id) + 1
-      $.extend(duplicated_record,new_record[singleResourceName][name.resourceize() + "_attributes"])
+      $.extend(duplicated_record,new_record[singleResourceName][name.underscore() + "_attributes"])
       fixtures[name.fixtureize()].push(duplicated_record)
-      delete new_record[singleResourceName][name.resourceize() + "_attributes"]
-      new_record[singleResourceName][name.resourceize().singularize() + "_id"] = duplicated_record.id
+      delete new_record[singleResourceName][name.underscore() + "_attributes"]
+      new_record[singleResourceName][name.underscore().singularize() + "_id"] = duplicated_record.id
       json[name.resourceize()].push(duplicated_record)
       json
 
@@ -182,7 +182,6 @@
                     json = addRelatedRecords(fixtures,json,name,new_record,singleResourceName)
                   else
                     json = addRelatedRecord(fixtures,json,name,new_record,singleResourceName)
-
 
             @responseText = addRecord(fixtures,json,new_record,fixtureName,resourceName,singleResourceName)
 

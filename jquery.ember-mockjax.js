@@ -74,10 +74,10 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       }
       duplicated_record = $.extend(true, {}, fixtures[name.fixtureize()].slice(-1).pop());
       duplicated_record.id = parseInt(duplicated_record.id) + 1;
-      $.extend(duplicated_record, new_record[singleResourceName][name.resourceize() + "_attributes"]);
+      $.extend(duplicated_record, new_record[singleResourceName][name.underscore() + "_attributes"]);
       fixtures[name.fixtureize()].push(duplicated_record);
-      delete new_record[singleResourceName][name.resourceize() + "_attributes"];
-      new_record[singleResourceName][name.resourceize().singularize() + "_id"] = duplicated_record.id;
+      delete new_record[singleResourceName][name.underscore() + "_attributes"];
+      new_record[singleResourceName][name.underscore().singularize() + "_id"] = duplicated_record.id;
       json[name.resourceize()].push(duplicated_record);
       return json;
     };
