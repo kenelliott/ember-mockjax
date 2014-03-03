@@ -27,7 +27,7 @@
             if element[scope_param.singularize()].toString() in requestData[param] or element[scope_param.singularize()] in requestData[param]
               matches += 1
           else
-            matches += 1 if requestData[param] == element[scope_param.singularize()]
+            matches += 1 if requestData[param].toString() == element[scope_param.singularize()].toString()
         true if matches == queryParams.length
 
     uniqueArray = (arr) ->
