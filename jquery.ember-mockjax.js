@@ -35,7 +35,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
               matches += 1;
             }
           } else {
-            if (requestData[param].toString() === element[scope_param.singularize()].toString()) {
+            if (requestData[param] === element[scope_param.singularize()]) {
               matches += 1;
             }
           }
