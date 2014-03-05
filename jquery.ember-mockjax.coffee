@@ -27,6 +27,7 @@
             if element[scope_param.singularize()].toString() in requestData[param] or element[scope_param.singularize()] in requestData[param]
               matches += 1
           else
+            requestData[param] = parseInt(requestData[param]) if typeof requestData[param] is "string" and typeof element[scope_param.singularize()] is "number"
             matches += 1 if requestData[param] == element[scope_param.singularize()]
         true if matches == queryParams.length
 

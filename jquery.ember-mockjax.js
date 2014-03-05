@@ -35,6 +35,9 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
               matches += 1;
             }
           } else {
+            if (typeof requestData[param] === "string" && typeof element[scope_param.singularize()] === "number") {
+              requestData[param] = parseInt(requestData[param]);
+            }
             if (requestData[param] === element[scope_param.singularize()]) {
               matches += 1;
             }
