@@ -116,7 +116,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
     };
     allPropsNull = function(obj, msg) {
       return Object.keys(obj).every(function(key) {
-        if (obj[key] !== null && key !== "archived" && key !== "type") {
+        if (obj[key] !== null && key !== "archived" && key !== "type" && key !== "primary") {
           if (typeof obj[key] === "object") {
             return allPropsNull(obj[key]);
           }
