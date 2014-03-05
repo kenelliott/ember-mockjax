@@ -27,10 +27,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
         for (_i = 0, _len = queryParams.length; _i < _len; _i++) {
           param = queryParams[_i];
           scope_param = param.replace("by_", "");
-          if (requestData[param] == null) {
-            continue;
-          }
-          if (typeof requestData[param] === "object") {
+          if (typeof requestData[param] === "object" && requestData[param] !== null) {
             if ((_ref = element[scope_param.singularize()].toString(), __indexOf.call(requestData[param], _ref) >= 0) || (_ref1 = element[scope_param.singularize()], __indexOf.call(requestData[param], _ref1) >= 0)) {
               matches += 1;
             }
