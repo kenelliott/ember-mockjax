@@ -22,7 +22,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
     };
     findRecords = function(fixtures, fixtureName, queryParams, requestData) {
       return fixtures[fixtureName].filter(function(element, index) {
-        var matches, param, scope_param, _i, _len, _ref, _ref1;
+        var matchParam, matches, param, scope_param, _i, _len, _ref, _ref1;
         matches = 0;
         for (_i = 0, _len = queryParams.length; _i < _len; _i++) {
           param = queryParams[_i];
@@ -35,10 +35,11 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
               matches += 1;
             }
           } else {
+            matchParam = requestData[param];
             if (typeof requestData[param] === "string" && typeof element[scope_param.singularize()] === "number") {
-              requestData[param] = parseInt(requestData[param]);
+              matchParam = parseInt(requestData[param]);
             }
-            if (requestData[param] === element[scope_param.singularize()]) {
+            if (matchParam === element[scope_param.singularize()]) {
               matches += 1;
             }
           }
