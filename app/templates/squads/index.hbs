@@ -6,9 +6,9 @@
 </div>
 <div class="row">
   {{#each}}
-    <div class='col-lg-6'>
-      <h2>{{team.name}} - {{name}}</h2>
-      <ol>
+    <div class="col-lg-6 squad">
+      <h2><span class="team-name">{{team.name}}</span> - <span class="squad-name">{{name}}</span></h2>
+      <ol class="players">
         {{#each players}}
           <li>{{#link-to "player" id}}{{name}}{{/link-to}}</li>
         {{/each}}

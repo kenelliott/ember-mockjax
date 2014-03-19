@@ -119,7 +119,7 @@ module.exports = (grunt) ->
         options:
           nospawn: true
       coffee:
-        files: "./app/**/*.coffee"
+        files: "./**/*.coffee"
         tasks: ["coffee"]
         options:
           sourceMap: true

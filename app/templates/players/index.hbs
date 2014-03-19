@@ -6,16 +6,16 @@
 </div>
 <div class="row">
   {{#each}}
-    <div class='col-lg-6' style="min-height:300px">
+    <div class="col-lg-6 player" style="min-height:300px">
       <h2>{{name}} - {{squad.name}}</h2>
       <h4>Weapons</h4>
-      <ol>
+      <ol class="weapons">
         {{#each weapons}}
           <li>{{name}}</li>
         {{/each}}
       </ol>
       <h4>Medals</h4>
-      <ol>
+      <ol class="medals">
         {{#each medals}}
           <li>{{name}}</li>
         {{/each}}
