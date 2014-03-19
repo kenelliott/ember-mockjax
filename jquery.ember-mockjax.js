@@ -2,7 +2,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
 
 (function($) {
   return $.emberMockJax = function(options) {
-    var addRecord, addRelatedRecord, addRelatedRecords, allPropsNull, buildErrorObject, config, findRecords, flattenObject, log, parseUrl, setErrorMessages, settings, sideloadRecords, uniqueArray;
+    var addRecord, addRelatedRecord, addRelatedRecords, allPropsNull, buildErrorObject, config, findRecords, flattenObject, getRelatedModels, getRelationships, log, parseUrl, setErrorMessages, settings, sideloadRecords, uniqueArray;
     config = {
       fixtures: {},
       urls: ["*"],
@@ -53,21 +53,6 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       return $.grep(arr, function(v, k) {
         return $.inArray(v, arr) === k;
       });
-    };
-    sideloadRecords = function(fixtures, name, parent, kind) {
-      var params, res, temp;
-      temp = [];
-      params = [];
-      res = [];
-      parent.forEach(function(record) {
-        if (kind === "belongsTo") {
-          return res.push(record[name.underscore().singularize() + "_id"]);
-        } else {
-          return $.merge(res, record[name.underscore().singularize() + "_ids"]);
-        }
-      });
-      params["ids"] = uniqueArray(res);
-      return findRecords(fixtures, name.capitalize().pluralize(), ["ids"], params);
     };
     addRelatedRecord = function(fixtures, json, name, new_record, singleResourceName) {
       var duplicated_record;
@@ -168,6 +153,37 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       delete obj[rootKey];
       return obj;
     };
+    getRelationships = function(modelName) {
+      return Ember.get(App[modelName], "relationshipsByName");
+    };
+    sideloadRecords = function(fixtures, name, parent, kind) {
+      var params, records, res, temp;
+      temp = [];
+      params = [];
+      res = [];
+      parent.forEach(function(record) {
+        if (kind === "belongsTo") {
+          return res.push(record[name.underscore().singularize() + "_id"]);
+        } else {
+          return $.merge(res, record[name.underscore().singularize() + "_ids"]);
+        }
+      });
+      params["ids"] = uniqueArray(res);
+      return records = findRecords(fixtures, name.capitalize().pluralize(), ["ids"], params);
+    };
+    getRelatedModels = function(resourceName, fixtures, json) {
+      var relationships;
+      relationships = getRelationships(resourceName.modelize());
+      relationships.forEach(function(name, relationship) {
+        if (__indexOf.call(Object.keys(relationship.options), "async") >= 0) {
+          if (!relationship.options.async) {
+            json[name.pluralize()] = sideloadRecords(fixtures, name, json[resourceName], relationship.kind);
+            return getRelatedModels(name, fixtures, json);
+          }
+        }
+      });
+      return json;
+    };
     String.prototype.fixtureize = function() {
       if (typeof name === "string") {
         return this.camelize().capitalize().pluralize();
@@ -176,6 +192,11 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
     String.prototype.resourceize = function() {
       if (typeof name === "string") {
         return this.pluralize().underscore();
+      }
+    };
+    String.prototype.modelize = function() {
+      if (typeof name === "string") {
+        return this.singularize().camelize().capitalize();
       }
     };
     return $.mockjax({
@@ -199,14 +220,14 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
           if (requestType === "put") {
             putId = modelName;
           }
-          modelName = pathObject.slice(-2).shift().singularize().camelize().capitalize();
+          modelName = pathObject.slice(-2).shift().modelize();
         } else {
-          modelName = modelName.singularize().camelize().capitalize();
+          modelName = modelName.modelize();
         }
         fixtureName = modelName.fixtureize();
         resourceName = modelName.resourceize();
         singleResourceName = resourceName.singularize();
-        emberRelationships = Ember.get(App[modelName], "relationshipsByName");
+        emberRelationships = getRelationships(modelName);
         fixtures = settings.fixtures;
         if (typeof request.data === "object") {
           queryParams = Object.keys(request.data);
@@ -276,14 +297,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
           } else {
             json[resourceName] = fixtures[fixtureName];
           }
-          emberRelationships.forEach(function(name, relationship) {
-            if (__indexOf.call(Object.keys(relationship.options), "async") >= 0) {
-              if (!relationship.options.async) {
-                return json[name.pluralize()] = sideloadRecords(fixtures, name, json[resourceName], relationship.kind);
-              }
-            }
-          });
-          this.responseText = json;
+          this.responseText = getRelatedModels(resourceName, fixtures, json);
         }
         if ($.mockjaxSettings.logging) {
           return console.log("MOCK RSP:", request.url, this.responseText);

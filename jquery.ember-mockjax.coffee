@@ -1,5 +1,4 @@
 (($) ->
-
   $.emberMockJax = (options) ->
     # defaults
     config =
@@ -36,18 +35,6 @@
       $.grep arr, (v, k) ->
         $.inArray(v ,arr) == k
 
-    sideloadRecords = (fixtures, name, parent, kind) ->
-      temp = []
-      params = []
-      res = []
-      parent.forEach (record) ->
-        if kind is "belongsTo"
-          res.push record[name.underscore().singularize() + "_id"]
-        else
-          $.merge(res, record[name.underscore().singularize() + "_ids"])
-
-      params["ids"] = uniqueArray res
-      findRecords(fixtures,name.capitalize().pluralize(),["ids"],params)
 
     addRelatedRecord = (fixtures, json, name, new_record, singleResourceName) ->
       json[name.resourceize()] = [] if typeof json[name.resourceize()] isnt "object"
@@ -128,11 +115,39 @@
       delete obj[rootKey]
       obj
 
+    getRelationships = (modelName) ->
+      Ember.get(App[modelName], "relationshipsByName")
+
+    sideloadRecords = (fixtures, name, parent, kind) ->
+      temp = []
+      params = []
+      res = []
+      parent.forEach (record) ->
+        if kind is "belongsTo"
+          res.push record[name.underscore().singularize() + "_id"]
+        else
+          $.merge(res, record[name.underscore().singularize() + "_ids"])
+
+      params["ids"] = uniqueArray res
+      records = findRecords(fixtures,name.capitalize().pluralize(),["ids"],params)
+
+    getRelatedModels = (resourceName, fixtures, json) ->
+      relationships = getRelationships(resourceName.modelize())
+      relationships.forEach (name, relationship) ->
+        if "async" in Object.keys(relationship.options)
+          unless relationship.options.async
+            json[name.pluralize()] = sideloadRecords(fixtures,name,json[resourceName],relationship.kind)
+            getRelatedModels(name, fixtures, json)
+      json
+
     String::fixtureize = ->
-      this.camelize().capitalize().pluralize() if typeof name is "string"
+      @camelize().capitalize().pluralize() if typeof name is "string"
 
     String::resourceize = ->
-      this.pluralize().underscore() if typeof name is "string"
+      @pluralize().underscore() if typeof name is "string"
+
+    String::modelize = ->
+      @singularize().camelize().capitalize() if typeof name is "string"
 
     $.mockjax
       url: "*"
@@ -154,15 +169,15 @@
           if requestType is "put"
             putId = modelName
 
-          modelName = pathObject.slice(-2).shift().singularize().camelize().capitalize()
+          modelName = pathObject.slice(-2).shift().modelize()
 
         else
-          modelName = modelName.singularize().camelize().capitalize()
+          modelName = modelName.modelize()
 
         fixtureName             = modelName.fixtureize()
         resourceName            = modelName.resourceize()
         singleResourceName      = resourceName.singularize()
-        emberRelationships      = Ember.get(App[modelName], "relationshipsByName")
+        emberRelationships      = getRelationships(modelName)
         fixtures                = settings.fixtures
         queryParams             = Object.keys(request.data) if typeof request.data is "object"
         modelAttributes         = Object.keys(App[modelName].prototype).filter (e) ->
@@ -215,13 +230,8 @@
           else
             json[resourceName] = fixtures[fixtureName]
 
-          emberRelationships.forEach (name,relationship) ->
-            # async = false / sideload records
-            if "async" in Object.keys(relationship.options)
-              unless relationship.options.async
-                json[name.pluralize()] = sideloadRecords(fixtures,name,json[resourceName],relationship.kind)
-
-          @responseText = json
+          @responseText = getRelatedModels(resourceName, fixtures, json)
 
         console.log "MOCK RSP:", request.url, @responseText if $.mockjaxSettings.logging
+
 ) jQuery
