@@ -134,20 +134,39 @@ App.Fixtures.Weapons = [
 	id: 1
 	name: "Pistol"
 	player_ids: [1,3,6]
+	attachment_ids: [1]
 ,
 	id: 2
 	name: "Shotgun"
 	player_ids: [1,2,5,8,10]
+	attachment_ids: [2]
 ,
 	id: 3
 	name: "Rifle"
 	player_ids: [4]
+	attachment_ids: [3,4]
 ,
 	id: 4
 	name: "Rockets"
 	player_ids: [2,4,7,9,10,11,12]
+	attachment_ids: []
 ,
 	id: 5
 	name: "BFG"
 	player_ids: [3,5,7,9,12]
+	attachment_ids: []
+]
+
+App.Fixtures.Attachments = [
+	id: 1
+	name: "Silencer"
+,
+	id: 2
+	name: "Pistol Grip"
+,
+	id: 3
+	name: "ACOG Scope"
+,
+	id: 4
+	name: "Grenade Launcher"
 ]

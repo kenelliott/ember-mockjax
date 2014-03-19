@@ -35,7 +35,6 @@
       $.grep arr, (v, k) ->
         $.inArray(v ,arr) == k
 
-
     addRelatedRecord = (fixtures, json, name, new_record, singleResourceName) ->
       json[name.resourceize()] = [] if typeof json[name.resourceize()] isnt "object"
       duplicated_record = $.extend(true, {}, fixtures[name.fixtureize()].slice(-1).pop())

@@ -11,7 +11,16 @@
       <h4>Weapons</h4>
       <ol class="weapons">
         {{#each weapons}}
-          <li>{{name}}</li>
+          <li>
+            {{name}}
+            {{#if attachments}}
+              <ul>
+                {{#each attachments}}
+                  <li>{{name}}</li>
+                {{/each}}
+              </ul>
+            {{/if}}
+          </li>
         {{/each}}
       </ol>
       <h4>Medals</h4>
