@@ -1,4 +1,4 @@
-App = window.App = Ember.Application.create()
+App = window.App = Em.Application.create()
 
 App.ApplicationAdapter = DS.ActiveModelAdapter.extend()
 

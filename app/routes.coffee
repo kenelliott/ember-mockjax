@@ -1,30 +1,30 @@
-App.IndexRoute = Ember.Route.extend
+App.IndexRoute = Em.Route.extend
   redirect: ->
     @transitionTo 'home'
 
-App.TeamsIndexRoute = Ember.Route.extend
+App.TeamsIndexRoute = Em.Route.extend
   model: ->
     @get('store').find('team')
 
-App.SquadsIndexRoute = Ember.Route.extend
+App.SquadsIndexRoute = Em.Route.extend
   model: ->
     @get('store').find('squad')
 
-App.PlayersIndexRoute = Ember.Route.extend
+App.PlayersIndexRoute = Em.Route.extend
   model: ->
     @get('store').find('player')
 
-App.SquadsNewRoute = Ember.Route.extend
+App.SquadsNewRoute = Em.Route.extend
   model: ->
     @get('store').createRecord('squad', name: "test squad", team: @get('store').createRecord('team', name: "test team"))
 
-App.SquadEditRoute = Ember.Route.extend
+App.SquadEditRoute = Em.Route.extend
   model: ->
     @modelFor 'squad'
   renderTemplate: ->
     @render 'squads/edit'
 
-App.PlayerIndexRoute = Ember.Route.extend
+App.PlayerIndexRoute = Em.Route.extend
   model: (params) ->
     @modelFor 'player'
   renderTemplate: ->
