@@ -48,7 +48,9 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
     };
     uniqueArray = function(arr) {
       arr = arr.map(function(k) {
-        return k.toString();
+        if (k !== null) {
+          return k.toString();
+        }
       });
       return $.grep(arr, function(v, k) {
         return $.inArray(v, arr) === k;

@@ -31,7 +31,8 @@
         true if matches == queryParams.length
 
     uniqueArray = (arr) ->
-      arr = arr.map (k) -> k.toString()
+      arr = arr.map (k) ->
+        k.toString() unless k is null
       $.grep arr, (v, k) ->
         $.inArray(v ,arr) == k
 
