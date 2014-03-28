@@ -1,6 +1,6 @@
 (function($) {
   return $.emberMockJax = function(options) {
-    var config, findRecords, getModelName, getRequestType, log, settings;
+    var config, error, findRecords, getModelName, getRequestType, log, settings;
     config = {
       fixtures: {},
       urls: ["*"],
@@ -15,6 +15,9 @@
       if (settings.debug) {
         return typeof console !== "undefined" && console !== null ? console.log(msg, obj) : void 0;
       }
+    };
+    error = function(msg) {
+      return typeof console !== "undefined" && console !== null ? console.error("jQuery-Ember-MockJax ERROR: " + msg) : void 0;
     };
     getRequestType = function(request) {
       return request.type.toLowerCase();
@@ -52,7 +55,7 @@
         rootModelName = getModelName(request);
         if (requestType === "get") {
           if (!config.fixtures[rootModelName.fixtureize()]) {
-            console.warn("Fixtures not found for Model : " + rootModelName);
+            error("Fixtures not found for Model : " + (rootModelName.fixturize()));
           }
           return log("rootModelName", rootModelName);
         }

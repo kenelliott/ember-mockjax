@@ -16,6 +16,9 @@
         msg = "no message"
       console?.log msg, obj if settings.debug
 
+    error = (msg) ->
+      console?.error "jQuery-Ember-MockJax ERROR: #{msg}"
+
     # parseUrl = (url) ->
     #   parser = document.createElement('a')
     #   parser.href = url
@@ -174,7 +177,7 @@
         rootModelName   = getModelName(request)
 
         if requestType is "get"
-          console.warn("Fixtures not found for Model : #{rootModelName}") unless config.fixtures[rootModelName.fixtureize()]
+          error("Fixtures not found for Model : #{rootModelName.fixturize()}") unless config.fixtures[rootModelName.fixtureize()]
           log "rootModelName", rootModelName
           # console.log modelName
           # findRecords(fixtureName)
