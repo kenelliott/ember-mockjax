@@ -1,3 +1,5 @@
+# add configuration params for nested_params
+
 (($) ->
   $.emberMockJax = (options) ->
     # defaults
@@ -6,7 +8,7 @@
       urls: ["*"]
       debug: false
 
-    settings = $.extend settings, options
+    settings = $.extend config, options
 
     log = (msg) ->
       console?.log msg if settings.debug

@@ -8,7 +8,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       urls: ["*"],
       debug: false
     };
-    settings = $.extend(settings, options);
+    settings = $.extend(config, options);
     log = function(msg) {
       if (settings.debug) {
         return typeof console !== "undefined" && console !== null ? console.log(msg) : void 0;
