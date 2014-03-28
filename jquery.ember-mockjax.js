@@ -1,6 +1,7 @@
 (function($) {
   return $.emberMockJax = function(options) {
-    var config, error, findRecords, getModelName, getRequestType, log, settings;
+    var config, error, findRecords, getModelName, getQueryParams, getRelationships, getRequestType, log, responseJSON, settings;
+    responseJSON = {};
     config = {
       fixtures: {},
       urls: ["*"],
@@ -25,6 +26,14 @@
     getModelName = function(request) {
       return request.url.replace("/" + config.namespace).split("/")[1];
     };
+    getQueryParams = function(request) {
+      if (typeof request.data === "object") {
+        return Object.keys(request.data);
+      }
+    };
+    getRelationships = function(modelName) {
+      return Em.get(App[modelName], "relationshipsByName");
+    };
     String.prototype.fixtureize = function() {
       if (typeof name === "string") {
         return this.camelize().capitalize().pluralize();
@@ -40,24 +49,33 @@
         return this.singularize().camelize().capitalize();
       }
     };
-    findRecords = function(modelName) {
+    findRecords = function(modelName, params) {
       var fixtureName;
       fixtureName = modelName.fixtureize();
-      return log("fixtureName", fixtureName);
+      return config.fixtures[fixtureName].filter(function(record) {
+        var param;
+        for (param in params) {
+          if (record[param] !== params[param] && (record[param] != null)) {
+            return false;
+          }
+        }
+        return true;
+      });
     };
     return $.mockjax({
       url: "*",
       responseTime: 0,
       response: function(request) {
-        var requestType, rootModelName;
-        log("request", request);
+        var queryParams, requestType, rootModelName;
         requestType = getRequestType(request);
         rootModelName = getModelName(request);
+        queryParams = getQueryParams(request);
         if (requestType === "get") {
           if (!config.fixtures[rootModelName.fixtureize()]) {
             error("Fixtures not found for Model : " + (rootModelName.fixturize()));
           }
-          return log("rootModelName", rootModelName);
+          responseJSON[rootModelName] = findRecords(rootModelName, queryParams);
+          return this.responseText = responseJSON;
         }
       }
     });

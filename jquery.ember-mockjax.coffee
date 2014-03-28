@@ -2,6 +2,8 @@
 
 (($) ->
   $.emberMockJax = (options) ->
+    responseJSON = {}
+
     # defaults
     config =
       fixtures: {}
@@ -109,9 +111,6 @@
     #   delete obj[rootKey]
     #   obj
 
-    # getRelationships = (modelName) ->
-    #   Ember.get(App[modelName], "relationshipsByName")
-
     # sideloadRecords = (fixtures, name, parent, kind) ->
     #   temp = []
     #   params = []
@@ -125,7 +124,7 @@
     #   params["ids"] = uniqueArray res
     #   records = findRecords(fixtures,name.capitalize().pluralize(),["ids"],params)
 
-    # getRelatedModels = (resourceName, fixtures, json) ->
+    # getRelatedModels = (resourceName, json) ->
     #   relationships = getRelationships(resourceName.modelize())
     #   relationships.forEach (name, relationship) ->
     #     if "async" in Object.keys(relationship.options)
@@ -140,6 +139,12 @@
     getModelName = (request) ->
       request.url.replace("/#{config.namespace}").split("/")[1]
 
+    getQueryParams = (request) ->
+      Object.keys(request.data) if typeof request.data is "object"
+
+    getRelationships = (modelName) ->
+      Em.get(App[modelName], "relationshipsByName")
+
     String::fixtureize = ->
       @camelize().capitalize().pluralize() if typeof name is "string"
 
@@ -149,36 +154,27 @@
     String::modelize = ->
       @singularize().camelize().capitalize() if typeof name is "string"
 
-    # findRecords = (fixtures, fixtureName, queryParams, requestData) ->
-    #   fixtures[fixtureName].filter (element, index) ->
-    #     matches = 0
-    #     for param in queryParams
-    #       scope_param = param.replace "by_", ""
-    #       if typeof requestData[param] is "object" and requestData[param] isnt null
-    #         if element[scope_param.singularize()].toString() in requestData[param] or element[scope_param.singularize()] in requestData[param]
-    #           matches += 1
-    #       else
-    #         matchParam = requestData[param]
-    #         matchParam = parseInt(requestData[param]) if typeof requestData[param] is "string" and typeof element[scope_param.singularize()] is "number"
-    #         matches += 1 if matchParam == element[scope_param.singularize()]
-    #     true if matches == queryParams.length
-
-    findRecords = (modelName) ->
+    findRecords = (modelName, params) ->
       fixtureName = modelName.fixtureize()
-      log "fixtureName", fixtureName
+      config.fixtures[fixtureName].filter (record) ->
+        for param of params
+          if record[param] isnt params[param] and record[param]?
+            return false
+        true
 
     $.mockjax
       url: "*"
       responseTime: 0
       response: (request) ->
-        log "request", request
-
-        requestType = getRequestType(request)
+        requestType     = getRequestType(request)
         rootModelName   = getModelName(request)
+        queryParams     = getQueryParams(request)
 
         if requestType is "get"
           error("Fixtures not found for Model : #{rootModelName.fixturize()}") unless config.fixtures[rootModelName.fixtureize()]
-          log "rootModelName", rootModelName
+          responseJSON[rootModelName] = findRecords(rootModelName, queryParams)
+          @responseText = responseJSON
+
           # console.log modelName
           # findRecords(fixtureName)
 
@@ -272,3 +268,17 @@
         # console.log "MOCK RSP:", request.url, @responseText if $.mockjaxSettings.logging
 
 ) jQuery
+
+# findRecords = (fixtures, fixtureName, queryParams, requestData) ->
+#   fixtures[fixtureName].filter (element, index) ->
+#     matches = 0
+#     for param in queryParams
+#       scope_param = param.replace "by_", ""
+#       if typeof requestData[param] is "object" and requestData[param] isnt null
+#         if element[scope_param.singularize()].toString() in requestData[param] or element[scope_param.singularize()] in requestData[param]
+#           matches += 1
+#       else
+#         matchParam = requestData[param]
+#         matchParam = parseInt(requestData[param]) if typeof requestData[param] is "string" and typeof element[scope_param.singularize()] is "number"
+#         matches += 1 if matchParam == element[scope_param.singularize()]
+#     true if matches == queryParams.length
