@@ -111,28 +111,6 @@
     #   delete obj[rootKey]
     #   obj
 
-    # sideloadRecords = (fixtures, name, parent, kind) ->
-    #   temp = []
-    #   params = []
-    #   res = []
-    #   parent.forEach (record) ->
-    #     if kind is "belongsTo"
-    #       res.push record[name.underscore().singularize() + "_id"]
-    #     else
-    #       $.merge(res, record[name.underscore().singularize() + "_ids"])
-
-    #   params["ids"] = uniqueArray res
-    #   records = findRecords(fixtures,name.capitalize().pluralize(),["ids"],params)
-
-    # getRelatedModels = (resourceName, json) ->
-    #   relationships = getRelationships(resourceName.modelize())
-    #   relationships.forEach (name, relationship) ->
-    #     if "async" in Object.keys(relationship.options)
-    #       unless relationship.options.async
-    #         json[name.pluralize()] = sideloadRecords(fixtures,name,json[resourceName],relationship.kind)
-    #         getRelatedModels(name, fixtures, json)
-    #   json
-
     getRequestType = (request) ->
       request.type.toLowerCase()
 
@@ -162,6 +140,31 @@
             return false
         true
 
+    # sideloadRecords = (fixtures, name, parent, kind) ->
+    #   temp = []
+    #   params = []
+    #   res = []
+    #   parent.forEach (record) ->
+    #     if kind is "belongsTo"
+    #       res.push record[name.underscore().singularize() + "_id"]
+    #     else
+    #       $.merge(res, record[name.underscore().singularize() + "_ids"])
+
+    #   params["ids"] = uniqueArray res
+    #   records = findRecords(fixtures,name.capitalize().pluralize(),["ids"],params)
+
+    # getRelatedModels = (resourceName, json) ->
+    #   relationships = getRelationships(resourceName.modelize())
+    #   relationships.forEach (name, relationship) ->
+    #     if "async" in Object.keys(relationship.options)
+    #       unless relationship.options.async
+    #         json[name.pluralize()] = sideloadRecords(fixtures,name,json[resourceName],relationship.kind)
+    #         getRelatedModels(name, fixtures, json)
+    #   json
+
+    getRelatedModels = (modelName) ->
+      relationships = getRelationships(modelName)
+
     $.mockjax
       url: "*"
       responseTime: 0
@@ -173,6 +176,9 @@
         if requestType is "get"
           error("Fixtures not found for Model : #{rootModelName.fixturize()}") unless config.fixtures[rootModelName.fixtureize()]
           responseJSON[rootModelName] = findRecords(rootModelName, queryParams)
+
+          # have to get related models, should the json be passed? Looks like it has to.
+
           @responseText = responseJSON
 
           # console.log modelName
