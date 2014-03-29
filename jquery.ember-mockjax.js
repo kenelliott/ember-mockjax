@@ -1,6 +1,6 @@
 (function($) {
   return $.emberMockJax = function(options) {
-    var config, error, findRecords, getModelName, getQueryParams, getRelationships, getRequestType, log, responseJSON, settings;
+    var config, error, findRecords, getModelName, getQueryParams, getRelatedModels, getRelationships, getRequestType, log, responseJSON, settings;
     responseJSON = {};
     config = {
       fixtures: {},
@@ -62,6 +62,10 @@
         return true;
       });
     };
+    getRelatedModels = function(modelName) {
+      var relationships;
+      return relationships = getRelationships(modelName);
+    };
     return $.mockjax({
       url: "*",
       responseTime: 0,
@@ -82,6 +86,4 @@
   };
 })(jQuery);
 
-/*
-//@ sourceMappingURL=jquery.ember-mockjax.js.map
-*/
+//# sourceMappingURL=jquery.ember-mockjax.js.map
