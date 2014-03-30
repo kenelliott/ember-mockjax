@@ -9,6 +9,7 @@
       fixtures: {}
       urls: ["*"]
       debug: true
+      namespace: ""
 
     settings = $.extend config, options
 
@@ -26,11 +27,11 @@
     #   parser.href = url
     #   parser
 
-    # uniqueArray = (arr) ->
-    #   arr = arr.map (k) ->
-    #     k.toString() unless k is null
-    #   $.grep arr, (v, k) ->
-    #     $.inArray(v ,arr) == k
+    uniqueArray = (arr) ->
+      arr = arr.map (k) ->
+        k.toString() unless k is null
+      $.grep arr, (v, k) ->
+        $.inArray(v ,arr) == k
 
     # addRelatedRecord = (fixtures, json, name, new_record, singleResourceName) ->
     #   json[name.resourceize()] = [] if typeof json[name.resourceize()] isnt "object"
@@ -111,35 +112,6 @@
     #   delete obj[rootKey]
     #   obj
 
-    getRequestType = (request) ->
-      request.type.toLowerCase()
-
-    getModelName = (request) ->
-      request.url.replace("/#{config.namespace}").split("/")[1]
-
-    getQueryParams = (request) ->
-      Object.keys(request.data) if typeof request.data is "object"
-
-    getRelationships = (modelName) ->
-      Em.get(App[modelName], "relationshipsByName")
-
-    String::fixtureize = ->
-      @camelize().capitalize().pluralize() if typeof name is "string"
-
-    String::resourceize = ->
-      @pluralize().underscore() if typeof name is "string"
-
-    String::modelize = ->
-      @singularize().camelize().capitalize() if typeof name is "string"
-
-    findRecords = (modelName, params) ->
-      fixtureName = modelName.fixtureize()
-      config.fixtures[fixtureName].filter (record) ->
-        for param of params
-          if record[param] isnt params[param] and record[param]?
-            return false
-        true
-
     # sideloadRecords = (fixtures, name, parent, kind) ->
     #   temp = []
     #   params = []
@@ -162,23 +134,70 @@
     #         getRelatedModels(name, fixtures, json)
     #   json
 
+    getRequestType = (request) ->
+      request.type.toLowerCase()
+
+    getModelName = (request) ->
+      request.url.replace("/#{config.namespace}","").split("/").shift()
+
+    getQueryParams = (request) ->
+      Object.keys(request.data) if typeof request.data is "object"
+
+    getRelationships = (modelName) ->
+      Em.get(App[modelName.modelize()], "relationshipsByName")
+
+    String::fixtureize = ->
+      @camelize().capitalize().pluralize()
+
+    String::resourceize = ->
+      @pluralize().underscore()
+
+    String::modelize = ->
+      @singularize().camelize().capitalize()
+
+    String::attributize = ->
+      @singularize().underscore()
+
+    findRecords = (modelName, params) ->
+      fixtureName = modelName.fixtureize()
+      error("Fixtures not found for Model : #{fixtureName}") unless config.fixtures[fixtureName]
+      config.fixtures[fixtureName].filter (record) ->
+        for param of params
+          if record[param] isnt params[param] and record[param]?
+            return false
+        true
+
+    getRelationshipIds = (modelName, relatedModel, relationshipType) ->
+      ids = []
+      responseJSON[modelName].forEach (record) ->
+        if relationshipType is "belongsTo"
+          ids.push record[relatedModel.attributize() + "_id"]
+        else
+          $.merge(ids, record[relatedModel.attributize() + "_ids"])
+      uniqueArray ids
+
     getRelatedModels = (modelName) ->
       relationships = getRelationships(modelName)
+      relationships.forEach (relatedModel, relationship) ->
+        return if !relationship.options.async? or relationship.options.async is true
+        params = []
+        params["ids"] = getRelationshipIds(modelName, relatedModel, relationship.kind)
+        responseJSON[relatedModel.resourceize()] = findRecords(relatedModel, params) 
+        getRelatedModels(relatedModel)
+
 
     $.mockjax
       url: "*"
       responseTime: 0
       response: (request) ->
+        responseJSON    = {}
         requestType     = getRequestType(request)
         rootModelName   = getModelName(request)
         queryParams     = getQueryParams(request)
 
         if requestType is "get"
-          error("Fixtures not found for Model : #{rootModelName.fixturize()}") unless config.fixtures[rootModelName.fixtureize()]
           responseJSON[rootModelName] = findRecords(rootModelName, queryParams)
-
-          # have to get related models, should the json be passed? Looks like it has to.
-
+          getRelatedModels(rootModelName)
           @responseText = responseJSON
 
           # console.log modelName
@@ -271,7 +290,7 @@
 
         #   @responseText = getRelatedModels(resourceName, fixtures, json)
 
-        # console.log "MOCK RSP:", request.url, @responseText if $.mockjaxSettings.logging
+        console.log "MOCK RSP:", request.url, @responseText if $.mockjaxSettings.logging
 
 ) jQuery
 
