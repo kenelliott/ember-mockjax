@@ -7,8 +7,9 @@
     # defaults
     config =
       fixtures: {}
+      factories: {}
       urls: ["*"]
-      debug: true
+      debug: false
       namespace: ""
 
     settings = $.extend config, options
@@ -17,7 +18,6 @@
       if !obj
         obj = msg
         msg = "no message"
-      console?.log msg, obj if settings.debug
 
     error = (msg) ->
       console?.error "jQuery-Ember-MockJax ERROR: #{msg}"
@@ -61,15 +61,6 @@
 
     #   delete new_record[singleResourceName][name.resourceize() + "_attributes"]
 
-    #   json
-
-    # addRecord = (fixtures, json, new_record, fixtureName, resourceName, singleResourceName) ->
-    #   duplicated_record = $.extend(true, {}, fixtures[fixtureName].slice(-1).pop())
-    #   duplicated_record.id = parseInt(duplicated_record.id) + 1
-    #   duplicated_record.archived_at = null
-    #   $.extend(duplicated_record, new_record[singleResourceName])
-    #   fixtures[fixtureName].push(duplicated_record)
-    #   json[resourceName].push(duplicated_record)
     #   json
 
     # allPropsNull = (obj,msg) ->
@@ -147,7 +138,7 @@
       Em.get(App[modelName.modelize()], "relationshipsByName")
 
     String::fixtureize = ->
-      @camelize().capitalize().pluralize()
+      @pluralize().camelize().capitalize()
 
     String::resourceize = ->
       @pluralize().underscore()
@@ -185,6 +176,19 @@
         responseJSON[relatedModel.resourceize()] = findRecords(relatedModel, params) 
         getRelatedModels(relatedModel)
 
+    getNextFixtureID = (rootModelName) ->
+        ++config.fixtures[rootModelName.fixtureize()].slice(0).sort((a,b) -> b.id - a.id)[0].id
+
+    setRecordDefaults = (request, rootModelName) ->
+      new_record = JSON.parse(request.data)[rootModelName.attributize()]
+      new_record.id = getNextFixtureID(rootModelName)
+      factory = config.factories[rootModelName.fixtureize()]
+      Object.keys(new_record).forEach (key) ->
+        prop = new_record[key]
+        def = factory[key.camelize()]?.default
+        if typeof prop is "object" and prop is null and def
+          new_record[key] = def
+      new_record
 
     $.mockjax
       url: "*"
@@ -195,7 +199,36 @@
         rootModelName   = getModelName(request)
         queryParams     = getQueryParams(request)
 
-        if requestType is "get"
+        if requestType is "post"
+          new_record = setRecordDefaults(request, rootModelName)
+          console.log new_record
+
+        # addRecord = (fixtures, json, new_record, fixtureName, resourceName, singleResourceName) ->
+        #   duplicated_record = $.extend(true, {}, fixtures[fixtureName].slice(-1).pop())
+        #   duplicated_record.id = parseInt(duplicated_record.id) + 1
+        #   duplicated_record.archived_at = null
+        #   $.extend(duplicated_record, new_record[singleResourceName])
+        #   fixtures[fixtureName].push(duplicated_record)
+        #   json[resourceName].push(duplicated_record)
+        #   json
+
+        #   # return error object if all values are null
+        #   if allPropsNull(new_record)
+        #     @status = 422
+        #     @responseText = buildErrorObject(new_record, "can't be blank")
+        #   else
+        #     json[resourceName] = []
+        #     emberRelationships.forEach (name,relationship) ->
+        #       if "nested" in Object.keys(relationship.options)
+        #         unless relationship.options.async
+        #           if relationship.kind is "hasMany"
+        #             json = addRelatedRecords(fixtures,json,name,new_record,singleResourceName)
+        #           else
+        #             json = addRelatedRecord(fixtures,json,name,new_record,singleResourceName)
+
+        #     @responseText = addRecord(fixtures,json,new_record,fixtureName,resourceName,singleResourceName)
+
+        else if requestType is "get"
           responseJSON[rootModelName] = findRecords(rootModelName, queryParams)
           getRelatedModels(rootModelName)
           @responseText = responseJSON
