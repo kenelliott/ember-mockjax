@@ -267,6 +267,9 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
             if (__indexOf.call(Object.keys(relationship.options), "nested") >= 0) {
               if (!relationship.options.async) {
                 fixtures[name.fixtureize()].forEach(function(record) {
+                  if (!new_record[singleResourceName][name.underscore() + "_attributes"]) {
+                    return;
+                  }
                   if (record.id === parseInt(new_record[singleResourceName][name.underscore() + "_attributes"].id)) {
                     $.extend(record, new_record[singleResourceName][name.underscore() + "_attributes"]);
                     if (typeof json[name.resourceize()] === "undefined") {
@@ -309,6 +312,4 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
   };
 })(jQuery);
 
-/*
-//@ sourceMappingURL=jquery.ember-mockjax.js.map
-*/
+//# sourceMappingURL=jquery.ember-mockjax.js.map

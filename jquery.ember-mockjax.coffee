@@ -209,6 +209,7 @@
             if "nested" in Object.keys(relationship.options)
               unless relationship.options.async
                 fixtures[name.fixtureize()].forEach (record) ->
+                  return if !new_record[singleResourceName][name.underscore() + "_attributes"]
                   if record.id is parseInt(new_record[singleResourceName][name.underscore() + "_attributes"].id)
                     $.extend(record, new_record[singleResourceName][name.underscore() + "_attributes"])
                     json[name.resourceize()] = [] if typeof json[name.resourceize()] is "undefined"
