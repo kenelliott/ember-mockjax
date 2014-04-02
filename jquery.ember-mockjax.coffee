@@ -22,16 +22,139 @@
     error = (msg) ->
       console?.error "jQuery-Ember-MockJax ERROR: #{msg}"
 
-    # parseUrl = (url) ->
-    #   parser = document.createElement('a')
-    #   parser.href = url
-    #   parser
-
     uniqueArray = (arr) ->
       arr = arr.map (k) ->
         k.toString() unless k is null
       $.grep arr, (v, k) ->
         $.inArray(v ,arr) == k
+
+    getRequestType = (request) ->
+      request.type.toLowerCase()
+
+    getModelName = (request) ->
+      request.url.replace("/#{config.namespace}","").split("/").shift()
+
+    getQueryParams = (request) ->
+      if typeof request.data is "object"
+        Object.keys(request.data)
+
+    getRelationships = (modelName) ->
+      Em.get(App[modelName.modelize()], "relationshipsByName")
+
+    String::fixtureize = ->
+      @pluralize().camelize().capitalize()
+
+    String::resourceize = ->
+      @pluralize().underscore()
+
+    String::modelize = ->
+      @singularize().camelize().capitalize()
+
+    String::attributize = ->
+      @singularize().underscore()
+
+    findRecords = (modelName, params) ->
+      fixtureName = modelName.fixtureize()
+      error("Fixtures not found for Model : #{fixtureName}") unless config.fixtures[fixtureName]
+      config.fixtures[fixtureName].filter (record) ->
+        for param of params
+          continue unless params.hasOwnProperty(param)
+          if param is "ids" and params[param].indexOf(record["id"].toString()) < 0
+            return false
+          else if record[param] isnt params[param] and record[param]?
+            return false
+        true
+
+    buildResponseJSON = (modelName, queryParams) ->
+      responseJSON[modelName] = findRecords(modelName, queryParams)
+      getRelatedRecords(modelName)
+
+    getRelationshipIds = (modelName, relatedModel, relationshipType) ->
+      ids = []
+      responseJSON[modelName].forEach (record) ->
+        if relationshipType is "belongsTo"
+          ids.push record[relatedModel.attributize() + "_id"]
+        else
+          $.merge(ids, record[relatedModel.attributize() + "_ids"])
+      uniqueArray ids
+
+    getRelatedRecords = (modelName) ->
+      relationships = getRelationships(modelName)
+      relationships.forEach (relatedModel, relationship) ->
+        return if !relationship.options.async? or relationship.options.async is true
+        params = []
+        params["ids"] = getRelationshipIds(modelName, relatedModel, relationship.kind)
+        responseJSON[relatedModel.resourceize()] = findRecords(relatedModel, params) 
+        getRelatedRecords(relatedModel)
+
+    getNextFixtureID = (modelName) ->
+      ++config.fixtures[modelName.fixtureize()].slice(0).sort((a,b) -> b.id - a.id)[0].id
+
+    setDefaultValues = (request, modelName) ->
+      record = JSON.parse(request.data)[modelName.attributize()]
+      setRecordDefaults(record, modelName)
+
+    setRecordDefaults = (record, modelName) ->
+      record.id = getNextFixtureID(modelName)
+      modelName.modelize()
+      factory = getFactory(modelName)
+      relationships = getRelationships(modelName)
+      Object.keys(record).forEach (key) ->
+        prop = record[key]
+        def = factory[key.camelize()]?.default
+        if typeof prop is "object" and prop is null and def
+          record[key] = def
+        else if typeof prop is "object" and prop isnt null
+          record[key] = setRecordDefaults(record[key], key.replace("_attributes",""))
+      record
+
+    getFactory = (modelName) ->
+      config.factories[modelName.fixtureize()]
+
+    addRelatedRecordsToFixtures = (modelName, record) ->
+      relationships = getRelationships(modelName)
+      relationships.forEach (relatedModelName, relationship) ->
+        attributeName = if relationship.kind is "hasMany" then relatedModelName.resourceize() else relatedModelName.attributize()
+        attributeName += "_attributes"
+        if relationship.options.nested and record[attributeName]?
+          if relationship.kind is "hasMany"
+
+          else
+            record[relatedModelName + "_id"] = addFixtureRecord(relatedModelName, record[attributeName])
+            delete record[attributeName]
+
+    addFixtureRecord = (modelName, record) ->
+      config.fixtures[modelName.fixtureize()].push(record)
+      record.id
+
+    $.mockjax
+      url: "*"
+      responseTime: 0
+      response: (request) ->
+        responseJSON    = {}
+        requestType     = getRequestType(request)
+        rootModelName   = getModelName(request)
+        queryParams     = getQueryParams(request)
+
+        if requestType is "post"
+          new_record = setDefaultValues(request, rootModelName)
+          addRelatedRecordsToFixtures(rootModelName, new_record)
+          buildResponseJSON(rootModelName, queryParams)
+
+        else if requestType is "get"
+          buildResponseJSON(rootModelName, queryParams)
+
+        @responseText = responseJSON
+
+        console.log "MOCK RSP:", request.url, @responseText if $.mockjaxSettings.logging
+
+) jQuery
+
+
+    # parseUrl = (url) ->
+    #   parser = document.createElement('a')
+    #   parser.href = url
+    #   parser
 
     # addRelatedRecord = (fixtures, json, name, new_record, singleResourceName) ->
     #   json[name.resourceize()] = [] if typeof json[name.resourceize()] isnt "object"
@@ -125,104 +248,6 @@
     #         getRelatedModels(name, fixtures, json)
     #   json
 
-    getRequestType = (request) ->
-      request.type.toLowerCase()
-
-    getModelName = (request) ->
-      request.url.replace("/#{config.namespace}","").split("/").shift()
-
-    getQueryParams = (request) ->
-      Object.keys(request.data) if typeof request.data is "object"
-
-    getRelationships = (modelName) ->
-      Em.get(App[modelName.modelize()], "relationshipsByName")
-
-    String::fixtureize = ->
-      @pluralize().camelize().capitalize()
-
-    String::resourceize = ->
-      @pluralize().underscore()
-
-    String::modelize = ->
-      @singularize().camelize().capitalize()
-
-    String::attributize = ->
-      @singularize().underscore()
-
-    findRecords = (modelName, params) ->
-      fixtureName = modelName.fixtureize()
-      error("Fixtures not found for Model : #{fixtureName}") unless config.fixtures[fixtureName]
-      config.fixtures[fixtureName].filter (record) ->
-        for param of params
-          if record[param] isnt params[param] and record[param]?
-            return false
-        true
-
-    buildResponseJSON = (modelName, queryParams) ->
-      responseJSON[modelName] = findRecords(modelName, queryParams)
-      getRelatedModels(modelName)
-
-    getRelationshipIds = (modelName, relatedModel, relationshipType) ->
-      ids = []
-      responseJSON[modelName].forEach (record) ->
-        if relationshipType is "belongsTo"
-          ids.push record[relatedModel.attributize() + "_id"]
-        else
-          $.merge(ids, record[relatedModel.attributize() + "_ids"])
-      uniqueArray ids
-
-    getRelatedModels = (modelName) ->
-      relationships = getRelationships(modelName)
-      relationships.forEach (relatedModel, relationship) ->
-        return if !relationship.options.async? or relationship.options.async is true
-        params = []
-        params["ids"] = getRelationshipIds(modelName, relatedModel, relationship.kind)
-        responseJSON[relatedModel.resourceize()] = findRecords(relatedModel, params) 
-        getRelatedModels(relatedModel)
-
-    getNextFixtureID = (modelName) ->
-        ++config.fixtures[modelName.fixtureize()].slice(0).sort((a,b) -> b.id - a.id)[0].id
-
-    setDefaultValues = (request, modelName) ->
-      record = JSON.parse(request.data)[modelName.attributize()]
-      setRecordDefaults(record, modelName)
-
-    setRecordDefaults = (record, modelName) ->
-      record.id = getNextFixtureID(modelName)
-      modelName.modelize()
-      factory = getFactory(modelName)
-      relationships = getRelationships(modelName)
-      Object.keys(record).forEach (key) ->
-        prop = record[key]
-        def = factory[key.camelize()]?.default
-        if typeof prop is "object" and prop is null and def
-          record[key] = def
-        else if typeof prop is "object" and prop isnt null
-          record[key] = setRecordDefaults(record[key], key.replace("_attributes",""))
-      record
-
-    getFactory = (modelName) ->
-      config.factories[modelName.fixtureize()]
-
-    $.mockjax
-      url: "*"
-      responseTime: 0
-      response: (request) ->
-        responseJSON    = {}
-        requestType     = getRequestType(request)
-        rootModelName   = getModelName(request)
-        queryParams     = getQueryParams(request)
-
-        if requestType is "post"
-          # check for missing properties
-
-          new_record = setDefaultValues(request, rootModelName)
-          # create records for nested attributes
-
-          console.log "new_record", new_record
-
-          buildResponseJSON(rootModelName, queryParams)
-
         # addRecord = (fixtures, json, new_record, fixtureName, resourceName, singleResourceName) ->
         #   duplicated_record = $.extend(true, {}, fixtures[fixtureName].slice(-1).pop())
         #   duplicated_record.id = parseInt(duplicated_record.id) + 1
@@ -247,10 +272,6 @@
         #             json = addRelatedRecord(fixtures,json,name,new_record,singleResourceName)
 
         #     @responseText = addRecord(fixtures,json,new_record,fixtureName,resourceName,singleResourceName)
-
-        else if requestType is "get"
-          buildResponseJSON(rootModelName, queryParams)
-          @responseText = responseJSON
 
           # console.log modelName
           # findRecords(fixtureName)
@@ -341,10 +362,6 @@
         #     json[resourceName] = fixtures[fixtureName]
 
         #   @responseText = getRelatedModels(resourceName, fixtures, json)
-
-        console.log "MOCK RSP:", request.url, @responseText if $.mockjaxSettings.logging
-
-) jQuery
 
 # findRecords = (fixtures, fixtureName, queryParams, requestData) ->
 #   fixtures[fixtureName].filter (element, index) ->

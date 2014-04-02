@@ -1,5 +1,10 @@
 App = window.App = Em.Application.create()
 
+App.ApplicationStore = DS.Store.extend
+  init: ->
+    @_super()
+    App.store = @
+
 App.ApplicationAdapter = DS.ActiveModelAdapter.extend()
 
 # Fix for embeding hasMany relationships

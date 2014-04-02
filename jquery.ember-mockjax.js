@@ -1,6 +1,6 @@
 (function($) {
   return $.emberMockJax = function(options) {
-    var buildResponseJSON, config, error, findRecords, getFactory, getModelName, getNextFixtureID, getQueryParams, getRelatedModels, getRelationshipIds, getRelationships, getRequestType, log, responseJSON, setDefaultValues, setRecordDefaults, uniqueArray;
+    var addFixtureRecord, addRelatedRecordsToFixtures, buildResponseJSON, config, error, findRecords, getFactory, getModelName, getNextFixtureID, getQueryParams, getRelatedRecords, getRelationshipIds, getRelationships, getRequestType, log, responseJSON, setDefaultValues, setRecordDefaults, uniqueArray;
     responseJSON = {};
     config = {
       fixtures: {},
@@ -10,7 +10,6 @@
       namespace: ""
     };
     $.extend(config, options);
-    console.log("config", config);
     log = function(msg, obj) {
       if (!obj) {
         obj = msg;
@@ -65,7 +64,14 @@
       return config.fixtures[fixtureName].filter(function(record) {
         var param;
         for (param in params) {
-          if (record[param] !== params[param] && (record[param] != null)) {
+          if (!params.hasOwnProperty(param)) {
+            continue;
+          }
+          if (param === "ids" && params[param].indexOf(record["id"].toString()) < 0) {
+            console.log("no match", record);
+            return false;
+          } else if (record[param] !== params[param] && (record[param] != null)) {
+            console.log("no match here", record);
             return false;
           }
         }
@@ -74,7 +80,7 @@
     };
     buildResponseJSON = function(modelName, queryParams) {
       responseJSON[modelName] = findRecords(modelName, queryParams);
-      return getRelatedModels(modelName);
+      return getRelatedRecords(modelName);
     };
     getRelationshipIds = function(modelName, relatedModel, relationshipType) {
       var ids;
@@ -88,7 +94,7 @@
       });
       return uniqueArray(ids);
     };
-    getRelatedModels = function(modelName) {
+    getRelatedRecords = function(modelName) {
       var relationships;
       relationships = getRelationships(modelName);
       return relationships.forEach(function(relatedModel, relationship) {
@@ -99,7 +105,7 @@
         params = [];
         params["ids"] = getRelationshipIds(modelName, relatedModel, relationship.kind);
         responseJSON[relatedModel.resourceize()] = findRecords(relatedModel, params);
-        return getRelatedModels(relatedModel);
+        return getRelatedRecords(relatedModel);
       });
     };
     getNextFixtureID = function(modelName) {
@@ -133,6 +139,27 @@
     getFactory = function(modelName) {
       return config.factories[modelName.fixtureize()];
     };
+    addRelatedRecordsToFixtures = function(modelName, record) {
+      var relationships;
+      relationships = getRelationships(modelName);
+      return relationships.forEach(function(relatedModelName, relationship) {
+        var attributeName;
+        attributeName = relationship.kind === "hasMany" ? relatedModelName.resourceize() : relatedModelName.attributize();
+        attributeName += "_attributes";
+        if (relationship.options.nested && (record[attributeName] != null)) {
+          if (relationship.kind === "hasMany") {
+
+          } else {
+            record[relatedModelName + "_id"] = addFixtureRecord(relatedModelName, record[attributeName]);
+            return delete record[attributeName];
+          }
+        }
+      });
+    };
+    addFixtureRecord = function(modelName, record) {
+      config.fixtures[modelName.fixtureize()].push(record);
+      return record.id;
+    };
     return $.mockjax({
       url: "*",
       responseTime: 0,
@@ -144,12 +171,12 @@
         queryParams = getQueryParams(request);
         if (requestType === "post") {
           new_record = setDefaultValues(request, rootModelName);
-          console.log(new_record);
+          addRelatedRecordsToFixtures(rootModelName, new_record);
           buildResponseJSON(rootModelName, queryParams);
         } else if (requestType === "get") {
           buildResponseJSON(rootModelName, queryParams);
-          this.responseText = responseJSON;
         }
+        this.responseText = responseJSON;
         if ($.mockjaxSettings.logging) {
           return console.log("MOCK RSP:", request.url, this.responseText);
         }
