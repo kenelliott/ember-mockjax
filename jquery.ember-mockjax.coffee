@@ -158,6 +158,10 @@
             return false
         true
 
+    buildResponseJSON = (modelName, queryParams) ->
+      responseJSON[modelName] = findRecords(modelName, queryParams)
+      getRelatedModels(modelName)
+
     getRelationshipIds = (modelName, relatedModel, relationshipType) ->
       ids = []
       responseJSON[modelName].forEach (record) ->
@@ -176,19 +180,29 @@
         responseJSON[relatedModel.resourceize()] = findRecords(relatedModel, params) 
         getRelatedModels(relatedModel)
 
-    getNextFixtureID = (rootModelName) ->
-        ++config.fixtures[rootModelName.fixtureize()].slice(0).sort((a,b) -> b.id - a.id)[0].id
+    getNextFixtureID = (modelName) ->
+        ++config.fixtures[modelName.fixtureize()].slice(0).sort((a,b) -> b.id - a.id)[0].id
 
-    setRecordDefaults = (request, rootModelName) ->
-      new_record = JSON.parse(request.data)[rootModelName.attributize()]
-      new_record.id = getNextFixtureID(rootModelName)
-      factory = config.factories[rootModelName.fixtureize()]
-      Object.keys(new_record).forEach (key) ->
-        prop = new_record[key]
+    setDefaultValues = (request, modelName) ->
+      record = JSON.parse(request.data)[modelName.attributize()]
+      record.id = getNextFixtureID(modelName)
+      setRecordDefaults(record, modelName)
+
+    setRecordDefaults = (record, modelName) ->
+      factory = getFactory(modelName)
+      relationships = getRelationships(modelName)
+      Object.keys(record).forEach (key) ->
+        prop = record[key]
         def = factory[key.camelize()]?.default
         if typeof prop is "object" and prop is null and def
-          new_record[key] = def
-      new_record
+          record[key] = def
+        else if typeof prop is "object" and prop isnt null
+          console.log "prop", prop, key
+        #   # setRecordDefaults(request, )
+      record
+
+    getFactory = (modelName) ->
+      config.factories[modelName.fixtureize()]
 
     $.mockjax
       url: "*"
@@ -200,8 +214,14 @@
         queryParams     = getQueryParams(request)
 
         if requestType is "post"
-          new_record = setRecordDefaults(request, rootModelName)
+          # check for missing properties
+
+          new_record = setDefaultValues(request, rootModelName)
+          # create records for nested attributes
+
           console.log new_record
+
+          buildResponseJSON(rootModelName, queryParams)
 
         # addRecord = (fixtures, json, new_record, fixtureName, resourceName, singleResourceName) ->
         #   duplicated_record = $.extend(true, {}, fixtures[fixtureName].slice(-1).pop())
@@ -229,8 +249,7 @@
         #     @responseText = addRecord(fixtures,json,new_record,fixtureName,resourceName,singleResourceName)
 
         else if requestType is "get"
-          responseJSON[rootModelName] = findRecords(rootModelName, queryParams)
-          getRelatedModels(rootModelName)
+          buildResponseJSON(rootModelName, queryParams)
           @responseText = responseJSON
 
           # console.log modelName

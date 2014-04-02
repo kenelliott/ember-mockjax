@@ -1,6 +1,6 @@
 (function($) {
   return $.emberMockJax = function(options) {
-    var config, error, findRecords, getModelName, getNextFixtureID, getQueryParams, getRelatedModels, getRelationshipIds, getRelationships, getRequestType, log, responseJSON, setRecordDefaults, settings, uniqueArray;
+    var buildResponseJSON, config, error, findRecords, getFactory, getModelName, getNextFixtureID, getQueryParams, getRelatedModels, getRelationshipIds, getRelationships, getRequestType, log, responseJSON, setDefaultValues, setRecordDefaults, settings, uniqueArray;
     responseJSON = {};
     config = {
       fixtures: {},
@@ -55,9 +55,6 @@
     String.prototype.attributize = function() {
       return this.singularize().underscore();
     };
-    String.prototype.propertize = function() {
-      return this.singularize().camelize();
-    };
     findRecords = function(modelName, params) {
       var fixtureName;
       fixtureName = modelName.fixtureize();
@@ -73,6 +70,10 @@
         }
         return true;
       });
+    };
+    buildResponseJSON = function(modelName, queryParams) {
+      responseJSON[modelName] = findRecords(modelName, queryParams);
+      return getRelatedModels(modelName);
     };
     getRelationshipIds = function(modelName, relatedModel, relationshipType) {
       var ids;
@@ -100,25 +101,35 @@
         return getRelatedModels(relatedModel);
       });
     };
-    getNextFixtureID = function(rootModelName) {
-      return ++config.fixtures[rootModelName.fixtureize()].slice(0).sort(function(a, b) {
+    getNextFixtureID = function(modelName) {
+      return ++config.fixtures[modelName.fixtureize()].slice(0).sort(function(a, b) {
         return b.id - a.id;
       })[0].id;
     };
-    setRecordDefaults = function(request, rootModelName) {
-      var factory, new_record;
-      new_record = JSON.parse(request.data)[rootModelName.attributize()];
-      new_record.id = getNextFixtureID(rootModelName);
-      factory = config.factories[rootModelName.fixtureize()];
-      Object.keys(new_record).forEach(function(key) {
+    setDefaultValues = function(request, modelName) {
+      var record;
+      record = JSON.parse(request.data)[modelName.attributize()];
+      record.id = getNextFixtureID(modelName);
+      return setRecordDefaults(record, modelName);
+    };
+    setRecordDefaults = function(record, modelName) {
+      var factory, relationships;
+      factory = getFactory(modelName);
+      relationships = getRelationships(modelName);
+      Object.keys(record).forEach(function(key) {
         var def, prop, _ref;
-        prop = new_record[key];
-        def = (_ref = factory[key.propertize()]) != null ? _ref["default"] : void 0;
+        prop = record[key];
+        def = (_ref = factory[key.camelize()]) != null ? _ref["default"] : void 0;
         if (typeof prop === "object" && prop === null && def) {
-          return new_record[key] = def;
+          return record[key] = def;
+        } else if (typeof prop === "object" && prop !== null) {
+          return console.log("prop", prop, key);
         }
       });
-      return new_record;
+      return record;
+    };
+    getFactory = function(modelName) {
+      return config.factories[modelName.fixtureize()];
     };
     return $.mockjax({
       url: "*",
@@ -130,11 +141,11 @@
         rootModelName = getModelName(request);
         queryParams = getQueryParams(request);
         if (requestType === "post") {
-          new_record = setRecordDefaults(request, rootModelName);
+          new_record = setDefaultValues(request, rootModelName);
           console.log(new_record);
+          buildResponseJSON(rootModelName, queryParams);
         } else if (requestType === "get") {
-          responseJSON[rootModelName] = findRecords(rootModelName, queryParams);
-          getRelatedModels(rootModelName);
+          buildResponseJSON(rootModelName, queryParams);
           this.responseText = responseJSON;
         }
         if ($.mockjaxSettings.logging) {
