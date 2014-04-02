@@ -12,7 +12,7 @@
       debug: false
       namespace: ""
 
-    settings = $.extend config, options
+    $.extend config, options
 
     log = (msg, obj) ->
       if !obj
@@ -185,10 +185,11 @@
 
     setDefaultValues = (request, modelName) ->
       record = JSON.parse(request.data)[modelName.attributize()]
-      record.id = getNextFixtureID(modelName)
       setRecordDefaults(record, modelName)
 
     setRecordDefaults = (record, modelName) ->
+      record.id = getNextFixtureID(modelName)
+      modelName.modelize()
       factory = getFactory(modelName)
       relationships = getRelationships(modelName)
       Object.keys(record).forEach (key) ->
@@ -197,8 +198,7 @@
         if typeof prop is "object" and prop is null and def
           record[key] = def
         else if typeof prop is "object" and prop isnt null
-          console.log "prop", prop, key
-        #   # setRecordDefaults(request, )
+          record[key] = setRecordDefaults(record[key], key.replace("_attributes",""))
       record
 
     getFactory = (modelName) ->
@@ -219,7 +219,7 @@
           new_record = setDefaultValues(request, rootModelName)
           # create records for nested attributes
 
-          console.log new_record
+          console.log "new_record", new_record
 
           buildResponseJSON(rootModelName, queryParams)
 

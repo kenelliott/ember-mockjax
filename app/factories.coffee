@@ -3,7 +3,7 @@ App.Factories = {}
 App.Factories.Teams =
   createdAt:
     default: "2014-03-29T11:34:34.000-04:00"
-  updatedA:
+  updatedAt:
     default: "2014-03-29T11:34:34.000-04:00"
 
 App.Factories.Squads =

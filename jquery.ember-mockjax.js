@@ -1,6 +1,6 @@
 (function($) {
   return $.emberMockJax = function(options) {
-    var buildResponseJSON, config, error, findRecords, getFactory, getModelName, getNextFixtureID, getQueryParams, getRelatedModels, getRelationshipIds, getRelationships, getRequestType, log, responseJSON, setDefaultValues, setRecordDefaults, settings, uniqueArray;
+    var buildResponseJSON, config, error, findRecords, getFactory, getModelName, getNextFixtureID, getQueryParams, getRelatedModels, getRelationshipIds, getRelationships, getRequestType, log, responseJSON, setDefaultValues, setRecordDefaults, uniqueArray;
     responseJSON = {};
     config = {
       fixtures: {},
@@ -9,7 +9,8 @@
       debug: false,
       namespace: ""
     };
-    settings = $.extend(config, options);
+    $.extend(config, options);
+    console.log("config", config);
     log = function(msg, obj) {
       if (!obj) {
         obj = msg;
@@ -109,11 +110,12 @@
     setDefaultValues = function(request, modelName) {
       var record;
       record = JSON.parse(request.data)[modelName.attributize()];
-      record.id = getNextFixtureID(modelName);
       return setRecordDefaults(record, modelName);
     };
     setRecordDefaults = function(record, modelName) {
       var factory, relationships;
+      record.id = getNextFixtureID(modelName);
+      modelName.modelize();
       factory = getFactory(modelName);
       relationships = getRelationships(modelName);
       Object.keys(record).forEach(function(key) {
@@ -123,7 +125,7 @@
         if (typeof prop === "object" && prop === null && def) {
           return record[key] = def;
         } else if (typeof prop === "object" && prop !== null) {
-          return console.log("prop", prop, key);
+          return record[key] = setRecordDefaults(record[key], key.replace("_attributes", ""));
         }
       });
       return record;
