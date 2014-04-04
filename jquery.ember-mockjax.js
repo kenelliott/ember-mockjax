@@ -1,6 +1,6 @@
 (function($) {
   return $.emberMockJax = function(options) {
-    var addFixtureRecord, addRelatedRecordsToFixtures, buildResponseJSON, config, error, findRecords, getFactory, getModelName, getNextFixtureID, getQueryParams, getRelatedRecords, getRelationshipIds, getRelationships, getRequestType, log, responseJSON, setDefaultValues, setRecordDefaults, uniqueArray;
+    var addRecordToFixtures, addRelatedRecordsToFixtures, buildResponseJSON, config, error, findRecords, getFactory, getFixtureById, getModelName, getNextFixtureID, getQueryParams, getRelatedRecords, getRelationshipIds, getRelationships, getRequestType, log, responseJSON, setDefaultValues, setRecordDefaults, splitUrl, uniqueArray;
     responseJSON = {};
     config = {
       fixtures: {},
@@ -32,12 +32,25 @@
     getRequestType = function(request) {
       return request.type.toLowerCase();
     };
+    splitUrl = function(url) {
+      return url.replace("/" + config.namespace, "").split("/");
+    };
     getModelName = function(request) {
-      return request.url.replace("/" + config.namespace, "").split("/").shift();
+      return splitUrl(request.url).shift();
     };
     getQueryParams = function(request) {
+      var id;
+      id = splitUrl(request.url)[1];
+      if (!request.data) {
+        request.data = [];
+      }
+      if (id) {
+        request.data = {
+          "id": parseInt(id)
+        };
+      }
       if (typeof request.data === "object") {
-        return Object.keys(request.data);
+        return request.data;
       }
     };
     getRelationships = function(modelName) {
@@ -67,11 +80,9 @@
           if (!params.hasOwnProperty(param)) {
             continue;
           }
-          if (param === "ids" && params[param].indexOf(record["id"].toString()) < 0) {
-            console.log("no match", record);
+          if (record[param] !== params[param] && (record[param] != null)) {
             return false;
-          } else if (record[param] !== params[param] && (record[param] != null)) {
-            console.log("no match here", record);
+          } else if (param === "ids" && params[param].indexOf(record.id.toString()) < 0) {
             return false;
           }
         }
@@ -87,9 +98,9 @@
       ids = [];
       responseJSON[modelName].forEach(function(record) {
         if (relationshipType === "belongsTo") {
-          return ids.push(record[relatedModel.attributize() + "_id"]);
+          return ids.push(record["" + (relatedModel.attributize()) + "_id"]);
         } else {
-          return $.merge(ids, record[relatedModel.attributize() + "_ids"]);
+          return $.merge(ids, record["" + (relatedModel.attributize()) + "_ids"]);
         }
       });
       return uniqueArray(ids);
@@ -109,9 +120,9 @@
       });
     };
     getNextFixtureID = function(modelName) {
-      return ++config.fixtures[modelName.fixtureize()].slice(0).sort(function(a, b) {
+      return config.fixtures[modelName.fixtureize()].slice(0).sort(function(a, b) {
         return b.id - a.id;
-      })[0].id;
+      })[0].id + 1;
     };
     setDefaultValues = function(request, modelName) {
       var record;
@@ -148,17 +159,23 @@
         attributeName += "_attributes";
         if (relationship.options.nested && (record[attributeName] != null)) {
           if (relationship.kind === "hasMany") {
-
+            record["" + relatedModelName + "_ids"] = [];
+            record[attributeName].forEach(function(relatedRecord) {
+              return record["" + relatedModelName + "_ids"].push(addRecordToFixtures(relatedModelName, relatedRecord));
+            });
           } else {
-            record[relatedModelName + "_id"] = addFixtureRecord(relatedModelName, record[attributeName]);
-            return delete record[attributeName];
+            record["" + relatedModelName + "_id"] = addRecordToFixtures(relatedModelName, record[attributeName]);
           }
+          return delete record[attributeName];
         }
       });
     };
-    addFixtureRecord = function(modelName, record) {
+    addRecordToFixtures = function(modelName, record) {
       config.fixtures[modelName.fixtureize()].push(record);
       return record.id;
+    };
+    getFixtureById = function(fixtureName, id) {
+      return App.Fixtures[fixtureName].filterBy("id", id).get("firstObject");
     };
     return $.mockjax({
       url: "*",
@@ -170,9 +187,13 @@
         rootModelName = getModelName(request);
         queryParams = getQueryParams(request);
         if (requestType === "post") {
+          console.log("post");
           new_record = setDefaultValues(request, rootModelName);
           addRelatedRecordsToFixtures(rootModelName, new_record);
+          addRecordToFixtures(rootModelName, new_record);
           buildResponseJSON(rootModelName, queryParams);
+        } else if (requestType === "put") {
+          console.log(queryParams);
         } else if (requestType === "get") {
           buildResponseJSON(rootModelName, queryParams);
         }

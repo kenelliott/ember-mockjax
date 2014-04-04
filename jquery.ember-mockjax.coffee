@@ -31,12 +31,17 @@
     getRequestType = (request) ->
       request.type.toLowerCase()
 
+    splitUrl = (url) ->
+      url.replace("/#{config.namespace}","").split("/")
+
     getModelName = (request) ->
-      request.url.replace("/#{config.namespace}","").split("/").shift()
+      splitUrl(request.url).shift()
 
     getQueryParams = (request) ->
-      if typeof request.data is "object"
-        Object.keys(request.data)
+      id = splitUrl(request.url)[1]
+      request.data = [] if !request.data
+      request.data = "id": parseInt(id) if id
+      request.data if typeof request.data is "object"
 
     getRelationships = (modelName) ->
       Em.get(App[modelName.modelize()], "relationshipsByName")
@@ -59,9 +64,9 @@
       config.fixtures[fixtureName].filter (record) ->
         for param of params
           continue unless params.hasOwnProperty(param)
-          if param is "ids" and params[param].indexOf(record["id"].toString()) < 0
+          if record[param] isnt params[param] and record[param]?
             return false
-          else if record[param] isnt params[param] and record[param]?
+          else if param is "ids" and params[param].indexOf(record.id.toString()) < 0
             return false
         true
 
@@ -73,9 +78,9 @@
       ids = []
       responseJSON[modelName].forEach (record) ->
         if relationshipType is "belongsTo"
-          ids.push record[relatedModel.attributize() + "_id"]
+          ids.push record["#{relatedModel.attributize()}_id"]
         else
-          $.merge(ids, record[relatedModel.attributize() + "_ids"])
+          $.merge(ids, record["#{relatedModel.attributize()}_ids"])
       uniqueArray ids
 
     getRelatedRecords = (modelName) ->
@@ -88,7 +93,7 @@
         getRelatedRecords(relatedModel)
 
     getNextFixtureID = (modelName) ->
-      ++config.fixtures[modelName.fixtureize()].slice(0).sort((a,b) -> b.id - a.id)[0].id
+      config.fixtures[modelName.fixtureize()].slice(0).sort((a,b) -> b.id - a.id)[0].id + 1
 
     setDefaultValues = (request, modelName) ->
       record = JSON.parse(request.data)[modelName.attributize()]
@@ -118,14 +123,19 @@
         attributeName += "_attributes"
         if relationship.options.nested and record[attributeName]?
           if relationship.kind is "hasMany"
-
+            record["#{relatedModelName}_ids"] = []
+            record[attributeName].forEach (relatedRecord) ->
+              record["#{relatedModelName}_ids"].push addRecordToFixtures(relatedModelName, relatedRecord)
           else
-            record[relatedModelName + "_id"] = addFixtureRecord(relatedModelName, record[attributeName])
-            delete record[attributeName]
+            record["#{relatedModelName}_id"] = addRecordToFixtures(relatedModelName, record[attributeName])
+          delete record[attributeName]
 
-    addFixtureRecord = (modelName, record) ->
+    addRecordToFixtures = (modelName, record) ->
       config.fixtures[modelName.fixtureize()].push(record)
       record.id
+
+    getFixtureById = (fixtureName, id) ->
+      App.Fixtures[fixtureName].filterBy("id", id).get("firstObject")
 
     $.mockjax
       url: "*"
@@ -139,8 +149,10 @@
         if requestType is "post"
           new_record = setDefaultValues(request, rootModelName)
           addRelatedRecordsToFixtures(rootModelName, new_record)
+          addRecordToFixtures(rootModelName, new_record)
           buildResponseJSON(rootModelName, queryParams)
-
+        else if requestType is "put"
+          console.log queryParams
         else if requestType is "get"
           buildResponseJSON(rootModelName, queryParams)
 
