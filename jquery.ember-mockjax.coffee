@@ -12,6 +12,9 @@
       debug: false
       namespace: ""
 
+    $.mockjaxSettings.logging = false
+
+
     $.extend config, options
 
     log = (msg, obj) ->
@@ -39,9 +42,15 @@
 
     getQueryParams = (request) ->
       id = splitUrl(request.url)[1]
-      request.data = [] if !request.data
-      request.data = "id": parseInt(id) if id
-      request.data if typeof request.data is "object"
+      if getRequestType(request) is "put"
+        request.data = JSON.parse(request.data)
+        modelName = getModelName(request).attributize()
+        request.data[modelName].id = parseInt(id) if id
+      else
+        request.data = [] if !request.data
+        request.data.id = parseInt(id) if id
+
+      request.data
 
     getRelationships = (modelName) ->
       Em.get(App[modelName.modelize()], "relationshipsByName")
@@ -103,7 +112,6 @@
       record.id = getNextFixtureID(modelName)
       modelName.modelize()
       factory = getFactory(modelName)
-      relationships = getRelationships(modelName)
       Object.keys(record).forEach (key) ->
         prop = record[key]
         def = factory[key.camelize()]?.default
@@ -125,9 +133,11 @@
           if relationship.kind is "hasMany"
             record["#{relatedModelName}_ids"] = []
             record[attributeName].forEach (relatedRecord) ->
-              record["#{relatedModelName}_ids"].push addRecordToFixtures(relatedModelName, relatedRecord)
+              if relatedRecord.id?
+                record["#{relatedModelName}_ids"].push addRecordToFixtures(relatedModelName, relatedRecord)
           else
-            record["#{relatedModelName}_id"] = addRecordToFixtures(relatedModelName, record[attributeName])
+            if record[attributeName].id?
+              record["#{relatedModelName}_id"] = addRecordToFixtures(relatedModelName, record[attributeName])
           delete record[attributeName]
 
     addRecordToFixtures = (modelName, record) ->
@@ -135,7 +145,7 @@
       record.id
 
     getFixtureById = (fixtureName, id) ->
-      App.Fixtures[fixtureName].filterBy("id", id).get("firstObject")
+      config.fixtures[fixtureName.fixtureize()].filterBy("id", id).get("firstObject")
 
     $.mockjax
       url: "*"
@@ -152,7 +162,13 @@
           addRecordToFixtures(rootModelName, new_record)
           buildResponseJSON(rootModelName, queryParams)
         else if requestType is "put"
-          console.log queryParams
+          update_record = getFixtureById(rootModelName, queryParams[rootModelName.attributize()].id)
+          addRelatedRecordsToFixtures(rootModelName, update_record)
+
+          # add related records to fixtures
+          # update related records in fixtures
+          # update root record
+
         else if requestType is "get"
           buildResponseJSON(rootModelName, queryParams)
 

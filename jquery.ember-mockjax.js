@@ -9,6 +9,7 @@
       debug: false,
       namespace: ""
     };
+    $.mockjaxSettings.logging = false;
     $.extend(config, options);
     log = function(msg, obj) {
       if (!obj) {
@@ -39,19 +40,23 @@
       return splitUrl(request.url).shift();
     };
     getQueryParams = function(request) {
-      var id;
+      var id, modelName;
       id = splitUrl(request.url)[1];
-      if (!request.data) {
-        request.data = [];
+      if (getRequestType(request) === "put") {
+        request.data = JSON.parse(request.data);
+        modelName = getModelName(request).attributize();
+        if (id) {
+          request.data[modelName].id = parseInt(id);
+        }
+      } else {
+        if (!request.data) {
+          request.data = [];
+        }
+        if (id) {
+          request.data.id = parseInt(id);
+        }
       }
-      if (id) {
-        request.data = {
-          "id": parseInt(id)
-        };
-      }
-      if (typeof request.data === "object") {
-        return request.data;
-      }
+      return request.data;
     };
     getRelationships = function(modelName) {
       return Em.get(App[modelName.modelize()], "relationshipsByName");
@@ -130,11 +135,10 @@
       return setRecordDefaults(record, modelName);
     };
     setRecordDefaults = function(record, modelName) {
-      var factory, relationships;
+      var factory;
       record.id = getNextFixtureID(modelName);
       modelName.modelize();
       factory = getFactory(modelName);
-      relationships = getRelationships(modelName);
       Object.keys(record).forEach(function(key) {
         var def, prop, _ref;
         prop = record[key];
@@ -161,10 +165,14 @@
           if (relationship.kind === "hasMany") {
             record["" + relatedModelName + "_ids"] = [];
             record[attributeName].forEach(function(relatedRecord) {
-              return record["" + relatedModelName + "_ids"].push(addRecordToFixtures(relatedModelName, relatedRecord));
+              if (relatedRecord.id != null) {
+                return record["" + relatedModelName + "_ids"].push(addRecordToFixtures(relatedModelName, relatedRecord));
+              }
             });
           } else {
-            record["" + relatedModelName + "_id"] = addRecordToFixtures(relatedModelName, record[attributeName]);
+            if (record[attributeName].id != null) {
+              record["" + relatedModelName + "_id"] = addRecordToFixtures(relatedModelName, record[attributeName]);
+            }
           }
           return delete record[attributeName];
         }
@@ -175,25 +183,27 @@
       return record.id;
     };
     getFixtureById = function(fixtureName, id) {
-      return App.Fixtures[fixtureName].filterBy("id", id).get("firstObject");
+      return config.fixtures[fixtureName.fixtureize()].filterBy("id", id).get("firstObject");
     };
     return $.mockjax({
       url: "*",
       responseTime: 0,
       response: function(request) {
-        var new_record, queryParams, requestType, rootModelName;
+        var new_record, queryParams, requestType, rootModelName, update_record;
         responseJSON = {};
         requestType = getRequestType(request);
         rootModelName = getModelName(request);
         queryParams = getQueryParams(request);
         if (requestType === "post") {
-          console.log("post");
           new_record = setDefaultValues(request, rootModelName);
           addRelatedRecordsToFixtures(rootModelName, new_record);
           addRecordToFixtures(rootModelName, new_record);
           buildResponseJSON(rootModelName, queryParams);
         } else if (requestType === "put") {
-          console.log(queryParams);
+          console.log("PUT");
+          update_record = getFixtureById(rootModelName, queryParams[rootModelName.attributize()].id);
+          addRelatedRecordsToFixtures(rootModelName, update_record);
+          console.log("new_record", new_record);
         } else if (requestType === "get") {
           buildResponseJSON(rootModelName, queryParams);
         }
