@@ -267,9 +267,12 @@
         responseJSON = {};
         requestType = getRequestType(request);
         rootModelName = getModelName(request);
+<<<<<<< HEAD
         errorObj = {
           errors: {}
         };
+=======
+>>>>>>> b025f2cc4499a2cdb61b15e64ab6131da260b7a3
         if (requestType === "post") {
           newRecord = setDefaultValues(request, rootModelName);
           if (!validate(errorObj, rootModelName, newRecord)) {
