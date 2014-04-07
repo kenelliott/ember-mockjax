@@ -11,6 +11,9 @@
       urls: ["*"]
       debug: false
       namespace: ""
+      scope_prefix: "by"
+      nested_suffix: "attributes"
+      delete_attribute: "_delete"
 
     $.mockjaxSettings.logging = true
 
@@ -184,6 +187,7 @@
           queryParams.id = id
           buildResponseJSON(rootModelName, queryParams)
         else if requestType is "put"
+          queryParams = getQueryParams(request)
           updateRecord = JSON.parse(queryParams)[rootModelName.attributize()]
           updateFixture = getFixtureById(rootModelName, updateRecord.id)
           addRelatedRecordsToFixtures(rootModelName, updateRecord)

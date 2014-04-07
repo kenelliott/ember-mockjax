@@ -186,21 +186,17 @@
             record["" + relatedModelName + "_ids"] = [];
             record[attributeName].forEach(function(relatedRecord) {
               if (!relatedRecord.id) {
-                console.log("adding hasMany related record", relatedModelName, relatedRecord);
                 relatedRecord.id = getNextFixtureID(modelName);
                 return record["" + relatedModelName + "_ids"].push(addRecordToFixtures(relatedModelName, relatedRecord));
               } else {
-                console.log("updating hasMany related record", relatedModelName, relatedRecord);
                 return $.extend(getFixtureById(relatedModelName, record[attributeName].id), relatedRecord);
               }
             });
           } else {
             if (!record[attributeName].id) {
-              console.log("adding belongsTo related record", relatedModelName, record[attributeName]);
               record[attributeName].id = getNextFixtureID(relatedModelName);
               record["" + relatedModelName + "_id"] = addRecordToFixtures(relatedModelName, record[attributeName]);
             } else {
-              console.log("updating belongsTo related record", relatedModelName, record[attributeName]);
               record["" + relatedModelName + "_id"] = record[attributeName].id;
               fixture = getFixtureById(relatedModelName, record[attributeName].id);
               $.extend(fixture, record[attributeName]);
@@ -225,7 +221,6 @@
         responseJSON = {};
         requestType = getRequestType(request);
         rootModelName = getModelName(request);
-        queryParams = getQueryParams(request);
         if (requestType === "post") {
           newRecord = setDefaultValues(request, rootModelName);
           addRelatedRecordsToFixtures(rootModelName, newRecord);
@@ -233,8 +228,8 @@
           queryParams = [];
           queryParams.id = id;
           buildResponseJSON(rootModelName, queryParams);
-          console.log(config.fixtures);
         } else if (requestType === "put") {
+          queryParams = getQueryParams(request);
           updateRecord = JSON.parse(queryParams)[rootModelName.attributize()];
           updateFixture = getFixtureById(rootModelName, updateRecord.id);
           addRelatedRecordsToFixtures(rootModelName, updateRecord);
@@ -243,6 +238,7 @@
           queryParams.id = updateRecord.ids;
           buildResponseJSON(rootModelName, queryParams);
         } else if (requestType === "get") {
+          queryParams = getQueryParams(request);
           buildResponseJSON(rootModelName, queryParams);
         }
         this.responseText = responseJSON;
