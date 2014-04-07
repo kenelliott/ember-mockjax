@@ -1,4 +1,4 @@
-  module "Squads"
+module "Squads"
 
 test "index [belongsTo]", ->
   visit("/squads").then ->
@@ -15,8 +15,8 @@ test "new [nested attributes]", ->
     fillIn "#name", "TestSquad"
     fillIn "#team-name", "TestTeam"
     click(".btn-primary").then ->
-      equal find(".squad:last .team-name").text(), "TestTeam", "New squad team name is rendered"
-      equal find(".squad:last .squad-name").text(), "TestSquad", "New squad name is rendered"
+      equal find(".squad:first .team-name").text(), "TestTeam", "New squad team name is rendered"
+      equal find(".squad:first .squad-name").text(), "TestSquad", "New squad name is rendered"
       App.Fixtures.Squads.pop()
       App.Fixtures.Teams.pop()
 
@@ -26,6 +26,6 @@ test "update [nested attributes]", ->
     fillIn "#name", "TestSquad"
     fillIn "#team-name", "TestTeam"
     click(".btn-primary").then ->
-      equal find(".squad:nth(0) .team-name").text(), "TestTeam", "Updated squad team name is rendered"
-      equal find(".squad:nth(0) .squad-name").text(), "TestSquad", "Updated squad name is rendered"
+      equal find(".squad:last .team-name").text(), "TestTeam", "Updated squad team name is rendered"
+      equal find(".squad:last .squad-name").text(), "TestSquad", "Updated squad name is rendered"
       App.Fixtures.Teams[0].name = originalName

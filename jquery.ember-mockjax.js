@@ -1,6 +1,6 @@
 (function($) {
   return $.emberMockJax = function(options) {
-    var addRecordToFixtures, addRelatedRecordsToFixtures, buildResponseJSON, config, error, findRecords, getFactory, getFixtureById, getModelName, getNextFixtureID, getQueryParams, getRelatedRecords, getRelationshipIds, getRelationships, getRequestType, log, responseJSON, setDefaultValues, setRecordDefaults, splitUrl, uniqueArray;
+    var addRecordToFixtures, addRelatedRecordsToFixtures, buildResponseJSON, config, error, findRecords, getFactory, getFixtureById, getModelName, getNextFixtureID, getQueryParams, getRelatedRecords, getRelationshipIds, getRelationships, getRequestType, log, removeIgnoredAttributes, responseJSON, setDefaultValues, setRecordDefaults, splitUrl, uniqueArray;
     responseJSON = {};
     config = {
       fixtures: {},
@@ -9,7 +9,7 @@
       debug: false,
       namespace: ""
     };
-    $.mockjaxSettings.logging = false;
+    $.mockjaxSettings.logging = true;
     $.extend(config, options);
     log = function(msg, obj) {
       if (!obj) {
@@ -48,6 +48,7 @@
         if (id) {
           request.data[modelName].id = parseInt(id);
         }
+        request.data = JSON.stringify(request.data);
       } else {
         if (!request.data) {
           request.data = [];
@@ -136,7 +137,6 @@
     };
     setRecordDefaults = function(record, modelName) {
       var factory;
-      record.id = getNextFixtureID(modelName);
       modelName.modelize();
       factory = getFactory(modelName);
       Object.keys(record).forEach(function(key) {
@@ -154,24 +154,56 @@
     getFactory = function(modelName) {
       return config.factories[modelName.fixtureize()];
     };
-    addRelatedRecordsToFixtures = function(modelName, record) {
-      var relationships;
+    removeIgnoredAttributes = function(modelName, record) {
+      var factory, relationships;
+      factory = getFactory(modelName);
+      Object.keys(factory).forEach(function(attr) {
+        if (factory[attr].ignore) {
+          return delete record[attr.attributize()];
+        }
+      });
       relationships = getRelationships(modelName);
       return relationships.forEach(function(relatedModelName, relationship) {
         var attributeName;
+        attributeName = relationship.kind === "hasMany" ? relatedModelName.resourceize() : relatedModelName.attributize();
+        attributeName += "_attributes";
+        if (record[attributeName] != null) {
+          return removeIgnoredAttributes(relatedModelName, record[attributeName]);
+        }
+      });
+    };
+    addRelatedRecordsToFixtures = function(modelName, record) {
+      var relationships;
+      removeIgnoredAttributes(modelName, record);
+      relationships = getRelationships(modelName);
+      record.id = getNextFixtureID(modelName);
+      return relationships.forEach(function(relatedModelName, relationship) {
+        var attributeName, fixture;
         attributeName = relationship.kind === "hasMany" ? relatedModelName.resourceize() : relatedModelName.attributize();
         attributeName += "_attributes";
         if (relationship.options.nested && (record[attributeName] != null)) {
           if (relationship.kind === "hasMany") {
             record["" + relatedModelName + "_ids"] = [];
             record[attributeName].forEach(function(relatedRecord) {
-              if (relatedRecord.id != null) {
+              if (!relatedRecord.id) {
+                console.log("adding hasMany related record", relatedModelName, relatedRecord);
+                relatedRecord.id = getNextFixtureID(modelName);
                 return record["" + relatedModelName + "_ids"].push(addRecordToFixtures(relatedModelName, relatedRecord));
+              } else {
+                console.log("updating hasMany related record", relatedModelName, relatedRecord);
+                return $.extend(getFixtureById(relatedModelName, record[attributeName].id), relatedRecord);
               }
             });
           } else {
-            if (record[attributeName].id != null) {
+            if (!record[attributeName].id) {
+              console.log("adding belongsTo related record", relatedModelName, record[attributeName]);
+              record[attributeName].id = getNextFixtureID(relatedModelName);
               record["" + relatedModelName + "_id"] = addRecordToFixtures(relatedModelName, record[attributeName]);
+            } else {
+              console.log("updating belongsTo related record", relatedModelName, record[attributeName]);
+              record["" + relatedModelName + "_id"] = record[attributeName].id;
+              fixture = getFixtureById(relatedModelName, record[attributeName].id);
+              $.extend(fixture, record[attributeName]);
             }
           }
           return delete record[attributeName];
@@ -183,27 +215,33 @@
       return record.id;
     };
     getFixtureById = function(fixtureName, id) {
-      return config.fixtures[fixtureName.fixtureize()].filterBy("id", id).get("firstObject");
+      return config.fixtures[fixtureName.fixtureize()].filterBy("id", parseInt(id)).get("firstObject");
     };
     return $.mockjax({
       url: "*",
       responseTime: 0,
       response: function(request) {
-        var new_record, queryParams, requestType, rootModelName, update_record;
+        var id, newRecord, queryParams, requestType, rootModelName, updateFixture, updateRecord;
         responseJSON = {};
         requestType = getRequestType(request);
         rootModelName = getModelName(request);
         queryParams = getQueryParams(request);
         if (requestType === "post") {
-          new_record = setDefaultValues(request, rootModelName);
-          addRelatedRecordsToFixtures(rootModelName, new_record);
-          addRecordToFixtures(rootModelName, new_record);
+          newRecord = setDefaultValues(request, rootModelName);
+          addRelatedRecordsToFixtures(rootModelName, newRecord);
+          id = addRecordToFixtures(rootModelName, newRecord);
+          queryParams = [];
+          queryParams.id = id;
           buildResponseJSON(rootModelName, queryParams);
+          console.log(config.fixtures);
         } else if (requestType === "put") {
-          console.log("PUT");
-          update_record = getFixtureById(rootModelName, queryParams[rootModelName.attributize()].id);
-          addRelatedRecordsToFixtures(rootModelName, update_record);
-          console.log("new_record", new_record);
+          updateRecord = JSON.parse(queryParams)[rootModelName.attributize()];
+          updateFixture = getFixtureById(rootModelName, updateRecord.id);
+          addRelatedRecordsToFixtures(rootModelName, updateRecord);
+          addRecordToFixtures(rootModelName, updateRecord);
+          queryParams = [];
+          queryParams.id = updateRecord.ids;
+          buildResponseJSON(rootModelName, queryParams);
         } else if (requestType === "get") {
           buildResponseJSON(rootModelName, queryParams);
         }
