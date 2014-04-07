@@ -5,6 +5,13 @@
   </div>
 </div>
 <div class="row">
+  {{#if errors.length}}
+    <div class="alert alert-danger">
+      {{#each errors.content}}
+        {{attribute}} {{message}}<br />
+      {{/each}}
+    </div>
+  {{/if}}
   <form role="form">
     <div class="form-group">
       <label for="name">Squad Name</label>

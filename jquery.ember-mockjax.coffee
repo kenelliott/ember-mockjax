@@ -11,6 +11,9 @@
       urls: ["*"]
       debug: false
       namespace: ""
+      scope_prefix: "by"
+      nested_suffix: "attributes"
+      delete_attribute: "_delete"
 
     $.mockjaxSettings.logging = true
 
@@ -133,6 +136,35 @@
         attributeName += "_attributes"
         removeIgnoredAttributes(relatedModelName, record[attributeName]) if record[attributeName]?
 
+    addError = (errorObj, errorKey, error) ->
+      errorObj.errors[errorKey] = [] unless errorObj.errors[errorKey]
+      errorObj.errors[errorKey].push(error) 
+
+    checkValidations = (errorObj, factory, key, value, prepend) ->
+      validations = factory[key].validation
+      return unless validations
+      errorKey = if prepend then "#{prepend}.#{key}" else key
+      # TODO: Custom error messages
+      if validations.required and not value
+        addError(errorObj, errorKey, "is required")
+      if validations.matches and not validations.matches.test(value)
+        addError(errorObj, errorKey, "is invalid")
+
+    validate = (errorObj, modelName, record, prepend) ->
+      modelName = modelName.modelize()
+      attributes = Em.get(App[modelName],"attributes")
+      relationships =  getRelationships(modelName)
+      factory = getFactory(modelName.resourceize())
+      return unless factory
+      for key, value of record
+        key = key.replace("_attributes","")
+        if value? and typeof value is "object" and relationships.has(key)
+          prependName = if prepend then "#{prepend}.#{key}" else key
+          validate(errorObj, key, value, prependName)
+        else if attributes.has(key)
+          checkValidations(errorObj, factory, key, value, prepend)
+      return true unless Object.keys(errorObj.errors).length > 0
+
     addRelatedRecordsToFixtures = (modelName, record) ->
       removeIgnoredAttributes(modelName, record)
       relationships = getRelationships(modelName)
@@ -175,16 +207,27 @@
         responseJSON    = {}
         requestType     = getRequestType(request)
         rootModelName   = getModelName(request)
+        errorObj = { errors:{} }
+
 
         if requestType is "post"
           newRecord = setDefaultValues(request, rootModelName)
+          unless validate(errorObj, rootModelName, newRecord)
+            @responseText = errorObj
+            @status = 422
+            return
           addRelatedRecordsToFixtures(rootModelName, newRecord)
           id = addRecordToFixtures(rootModelName, newRecord)
           queryParams = []
           queryParams.id = id
           buildResponseJSON(rootModelName, queryParams)
         else if requestType is "put"
+          queryParams = getQueryParams(request)
           updateRecord = JSON.parse(queryParams)[rootModelName.attributize()]
+          unless validate(errorObj, rootModelName, updateRecord)
+            @responseText = errorObj
+            @status = 422
+            return
           updateFixture = getFixtureById(rootModelName, updateRecord.id)
           addRelatedRecordsToFixtures(rootModelName, updateRecord)
           addRecordToFixtures(rootModelName, updateRecord)

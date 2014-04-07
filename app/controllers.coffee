@@ -9,3 +9,6 @@ App.SquadEditController = Em.ObjectController.extend
     save: ->
       @content.save().then =>
         @transitionToRoute 'squads'
+      ,
+      ->
+        #save error
