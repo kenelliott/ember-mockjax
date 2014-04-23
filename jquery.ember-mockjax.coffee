@@ -27,7 +27,7 @@
           else
             matchParam = requestData[param]
             matchParam = parseInt(requestData[param]) if typeof requestData[param] is "string" and typeof element[scope_param.singularize()] is "number"
-            matches += 1 if matchParam == element[scope_param.singularize()]
+            matches += 1 if matchParam == element[scope_param.singularize()] or matchParam is "page"
         true if matches == queryParams.length
 
     uniqueArray = (arr) ->
