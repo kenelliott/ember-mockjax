@@ -36,7 +36,7 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
             if (typeof requestData[param] === "string" && typeof element[scope_param.singularize()] === "number") {
               matchParam = parseInt(requestData[param]);
             }
-            if (matchParam === element[scope_param.singularize()] || matchParam === "page") {
+            if (matchParam === element[scope_param.singularize()] || scope_param === "page") {
               matches += 1;
             }
           }
