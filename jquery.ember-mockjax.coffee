@@ -15,7 +15,7 @@
       nested_suffix: "attributes"
       delete_attribute: "_delete"
 
-    $.mockjaxSettings.logging = true
+    $.mockjaxSettings.logging = false
 
     $.extend config, options
 
@@ -221,6 +221,7 @@
           queryParams = []
           queryParams.id = id
           buildResponseJSON(rootModelName, queryParams)
+          console.log responseJSON
         else if requestType is "put"
           queryParams = getQueryParams(request)
           updateRecord = JSON.parse(queryParams)[rootModelName.attributize()]

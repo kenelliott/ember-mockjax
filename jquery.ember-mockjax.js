@@ -12,7 +12,7 @@
       nested_suffix: "attributes",
       delete_attribute: "_delete"
     };
-    $.mockjaxSettings.logging = true;
+    $.mockjaxSettings.logging = false;
     $.extend(config, options);
     log = function(msg, obj) {
       if (!obj) {
@@ -267,12 +267,9 @@
         responseJSON = {};
         requestType = getRequestType(request);
         rootModelName = getModelName(request);
-<<<<<<< HEAD
         errorObj = {
           errors: {}
         };
-=======
->>>>>>> b025f2cc4499a2cdb61b15e64ab6131da260b7a3
         if (requestType === "post") {
           newRecord = setDefaultValues(request, rootModelName);
           if (!validate(errorObj, rootModelName, newRecord)) {
@@ -285,6 +282,7 @@
           queryParams = [];
           queryParams.id = id;
           buildResponseJSON(rootModelName, queryParams);
+          console.log(responseJSON);
         } else if (requestType === "put") {
           queryParams = getQueryParams(request);
           updateRecord = JSON.parse(queryParams)[rootModelName.attributize()];
