@@ -15,9 +15,9 @@
       nested_suffix: "attributes"
       delete_attribute: "_delete"
 
-    $.mockjaxSettings.logging = false
-
     $.extend config, options
+
+    $.mockjaxSettings.logging = config.debug
 
     log = (msg, obj) ->
       if !obj
@@ -165,10 +165,10 @@
           checkValidations(errorObj, factory, key, value, prepend)
       return true unless Object.keys(errorObj.errors).length > 0
 
-    addRelatedRecordsToFixtures = (modelName, record) ->
+    addRelatedFixtureRecords = (modelName, record, requestType) ->
       removeIgnoredAttributes(modelName, record)
       relationships = getRelationships(modelName)
-      record.id = getNextFixtureID(modelName)
+      record.id = getNextFixtureID(modelName) unless requestType is "put"
 
       relationships.forEach (relatedModelName, relationship) ->
         attributeName = if relationship.kind is "hasMany" then relatedModelName.resourceize() else relatedModelName.attributize()
@@ -179,21 +179,22 @@
             record[attributeName].forEach (relatedRecord) ->
               if !relatedRecord.id
                 relatedRecord.id = getNextFixtureID(modelName)
-                record["#{relatedModelName}_ids"].push addRecordToFixtures(relatedModelName, relatedRecord)
+                record["#{relatedModelName}_ids"].push addFixtureRecord(relatedModelName, relatedRecord)
               else
                 $.extend(getFixtureById(relatedModelName, record[attributeName].id), relatedRecord)
           else 
             if !record[attributeName].id
               record[attributeName].id = getNextFixtureID(relatedModelName)
-              record["#{relatedModelName}_id"] = addRecordToFixtures(relatedModelName, record[attributeName])
+              record["#{relatedModelName}_id"] = addFixtureRecord(relatedModelName, record[attributeName])
             else
               record["#{relatedModelName}_id"] = record[attributeName].id
               fixture = getFixtureById(relatedModelName, record[attributeName].id)
               $.extend(fixture, record[attributeName])
 
           delete record[attributeName]
+      record
 
-    addRecordToFixtures = (modelName, record) ->
+    addFixtureRecord = (modelName, record) ->
       config.fixtures[modelName.fixtureize()].push(record)
       record.id
 
@@ -216,12 +217,11 @@
             @responseText = errorObj
             @status = 422
             return
-          addRelatedRecordsToFixtures(rootModelName, newRecord)
-          id = addRecordToFixtures(rootModelName, newRecord)
+          addRelatedFixtureRecords(rootModelName, newRecord)
+          id = addFixtureRecord(rootModelName, newRecord)
           queryParams = []
           queryParams.id = id
           buildResponseJSON(rootModelName, queryParams)
-          console.log responseJSON
         else if requestType is "put"
           queryParams = getQueryParams(request)
           updateRecord = JSON.parse(queryParams)[rootModelName.attributize()]
@@ -230,10 +230,10 @@
             @status = 422
             return
           updateFixture = getFixtureById(rootModelName, updateRecord.id)
-          addRelatedRecordsToFixtures(rootModelName, updateRecord)
-          addRecordToFixtures(rootModelName, updateRecord)
+          updateRecord = addRelatedFixtureRecords(rootModelName, updateRecord, requestType)
           queryParams = []
-          queryParams.id = updateRecord.ids
+          $.extend(getFixtureById(rootModelName, updateRecord.id), updateRecord)
+          queryParams.id = updateRecord.id
           buildResponseJSON(rootModelName, queryParams)
         else if requestType is "get"
           queryParams = getQueryParams(request)

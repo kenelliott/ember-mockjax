@@ -26,6 +26,6 @@ test "update [nested attributes]", ->
     fillIn "#name", "TestSquad"
     fillIn "#team-name", "TestTeam"
     click(".btn-primary").then ->
-      equal find(".squad:last .team-name").text(), "TestTeam", "Updated squad team name is rendered"
-      equal find(".squad:last .squad-name").text(), "TestSquad", "Updated squad name is rendered"
+      equal find(".squad:first .team-name").text(), "TestTeam", "Updated squad team name is rendered"
+      equal find(".squad:first .squad-name").text(), "TestSquad", "Updated squad name is rendered"
       App.Fixtures.Teams[0].name = originalName
