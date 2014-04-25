@@ -3,5 +3,5 @@ $.emberMockJax(
   fixtures: App.Fixtures
   factories: App.Factories
   urls: ["*"]
-  debug: false
+  debug: true
 )

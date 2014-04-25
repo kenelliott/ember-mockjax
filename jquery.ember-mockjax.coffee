@@ -181,6 +181,7 @@
                 relatedRecord.id = getNextFixtureID(modelName)
                 record["#{relatedModelName}_ids"].push addFixtureRecord(relatedModelName, relatedRecord)
               else
+                relatedRecord.id = parseInt(relatedRecord.id)
                 $.extend(getFixtureById(relatedModelName, record[attributeName].id), relatedRecord)
           else 
             if !record[attributeName].id
@@ -189,6 +190,7 @@
             else
               record["#{relatedModelName}_id"] = record[attributeName].id
               fixture = getFixtureById(relatedModelName, record[attributeName].id)
+              record[attributeName].id = parseInt(record[attributeName].id)
               $.extend(fixture, record[attributeName])
 
           delete record[attributeName]

@@ -237,6 +237,7 @@
                 relatedRecord.id = getNextFixtureID(modelName);
                 return record["" + relatedModelName + "_ids"].push(addFixtureRecord(relatedModelName, relatedRecord));
               } else {
+                relatedRecord.id = parseInt(relatedRecord.id);
                 return $.extend(getFixtureById(relatedModelName, record[attributeName].id), relatedRecord);
               }
             });
@@ -247,6 +248,7 @@
             } else {
               record["" + relatedModelName + "_id"] = record[attributeName].id;
               fixture = getFixtureById(relatedModelName, record[attributeName].id);
+              record[attributeName].id = parseInt(record[attributeName].id);
               $.extend(fixture, record[attributeName]);
             }
           }
