@@ -59,3 +59,7 @@ DS.ActiveModelSerializer.reopen
       return json[key.replace("_id", "") + "_attributes"] = record.get(relationship.key).serialize(includeId:true) if nested
       json[key] = Em.get(belongsTo, "id")
     @serializePolymorphicType record, json, relationship  if relationship.options.polymorphic
+
+App.find = (modelName, attrs = {}) ->
+  App.store.find(modelName, attrs).then (res) ->
+    console.log res.get("content")
