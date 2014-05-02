@@ -11,9 +11,9 @@
       urls: ["*"]
       debug: false
       namespace: ""
-      scope_prefix: "by"
-      nested_suffix: "attributes"
-      delete_attribute: "_delete"
+      scopePrefixes: ["by_", "has_"]
+      nestedSuffix: "attributes"
+      deleteAttribute: "_delete"
 
     $.extend config, options
 
@@ -56,7 +56,11 @@
       request.data
 
     getRelationships = (modelName) ->
-      Em.get(App[modelName.modelize()], "relationshipsByName")
+      map = Ember.Map.create()
+      App[modelName.modelize()].eachComputedProperty (name, meta) -> 
+        if meta.isRelationship 
+          map.set(name, meta) 
+      map 
 
     String::fixtureize = ->
       @pluralize().camelize().capitalize()
@@ -74,7 +78,7 @@
       fixtureName = modelName.fixtureize()
       error("Fixtures not found for Model : #{fixtureName}") unless config.fixtures[fixtureName]
       config.fixtures[fixtureName].filter (record) ->
-        for param of params
+        for param in Object.keys(params)
           continue unless params.hasOwnProperty(param)
           if record[param] isnt params[param] and record[param]?
             return false
@@ -84,7 +88,7 @@
 
     buildResponseJSON = (modelName, queryParams) ->
       responseJSON[modelName] = findRecords(modelName, queryParams)
-      getRelatedRecords(modelName)
+      getSideloadedRecords(modelName)
 
     getRelationshipIds = (modelName, relatedModel, relationshipType) ->
       ids = []
@@ -95,14 +99,20 @@
           $.merge(ids, record["#{relatedModel.attributize()}_ids"])
       uniqueArray ids
 
-    getRelatedRecords = (modelName) ->
+    normalizeRequest = (request) -> 
+      params = $.parseParams(request.url) 
+      request.url = request.url.split("?")[0] 
+      request.data = if request.data then $.merge(request.data, params) else params 
+      request
+
+    getSideloadedRecords = (modelName) ->
       relationships = getRelationships(modelName)
       relationships.forEach (relatedModel, relationship) ->
         return if !relationship.options.async? or relationship.options.async is true
         params = []
         params["ids"] = getRelationshipIds(modelName, relatedModel, relationship.kind)
         responseJSON[relatedModel.resourceize()] = findRecords(relatedModel, params) 
-        getRelatedRecords(relatedModel)
+        getSideloadedRecords(relatedModel)
 
     getNextFixtureID = (modelName) ->
       config.fixtures[modelName.fixtureize()].slice(0).sort((a,b) -> b.id - a.id)[0].id + 1
@@ -208,10 +218,10 @@
       responseTime: 0
       response: (request) ->
         responseJSON    = {}
+        request         = normalizeRequest(request)
         requestType     = getRequestType(request)
         rootModelName   = getModelName(request)
-        errorObj = { errors:{} }
-
+        errorObj        = errors:{}
 
         if requestType is "post"
           newRecord = setDefaultValues(request, rootModelName)
@@ -245,4 +255,57 @@
 
         console.log "MOCK RSP:", request.url, @responseText if $.mockjaxSettings.logging
 
+) jQuery
+
+(($) ->
+  re = /([^&=]+)=?([^&]*)/g
+  decode = (str) ->
+    decodeURIComponent str.replace(/\+/g, " ")
+
+  $.parseParams = (query) ->
+    createElement = (params, key, value) ->
+      key = key + ""
+      if key.indexOf(".") isnt -1
+        list = key.split(".")
+        new_key = key.split(/\.(.+)?/)[1]
+        params[list[0]] = {}  unless params[list[0]]
+        if new_key isnt ""
+          createElement params[list[0]], new_key, value
+        else
+          console.warn "parseParams :: empty property in key \"" + key + "\""
+      else if key.indexOf("[") isnt -1
+        list = key.split("[")
+        key = list[0]
+        list = list[1].split("]")
+        index = list[0]
+        if index is ""
+          params = {}  unless params
+          params[key] = []  if not params[key] or not $.isArray(params[key])
+          params[key].push value
+        else
+          params = {}  unless params
+          params[key] = []  if not params[key] or not $.isArray(params[key])
+          params[key][parseInt(index)] = value
+      else
+        params = {}  unless params
+        params[key] = value
+      return
+    query = query + ""
+    query = window.location + ""  if query is ""
+    params = {}
+    e = undefined
+    if query
+      query = query.substr(0, query.indexOf("#"))  if query.indexOf("#") isnt -1
+      if query.indexOf("?") isnt -1
+        query = query.substr(query.indexOf("?") + 1, query.length)
+      else
+        return {}
+      return {}  if query is ""
+      while e = re.exec(query)
+        key = decode(e[1])
+        value = decode(e[2])
+        createElement params, key, value
+    params
+
+  return
 ) jQuery

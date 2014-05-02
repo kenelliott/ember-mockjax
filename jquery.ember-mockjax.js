@@ -1,6 +1,6 @@
 (function($) {
   return $.emberMockJax = function(options) {
-    var addError, addFixtureRecord, addRelatedFixtureRecords, buildResponseJSON, checkValidations, config, error, findRecords, getFactory, getFixtureById, getModelName, getNextFixtureID, getQueryParams, getRelatedRecords, getRelationshipIds, getRelationships, getRequestType, log, removeIgnoredAttributes, responseJSON, setDefaultValues, setRecordDefaults, splitUrl, uniqueArray, validate;
+    var addError, addFixtureRecord, addRelatedFixtureRecords, buildResponseJSON, checkValidations, config, error, findRecords, getFactory, getFixtureById, getModelName, getNextFixtureID, getQueryParams, getRelationshipIds, getRelationships, getRequestType, getSideloadedRecords, log, normalizeRequest, removeIgnoredAttributes, responseJSON, setDefaultValues, setRecordDefaults, splitUrl, uniqueArray, validate;
     responseJSON = {};
     config = {
       fixtures: {},
@@ -8,9 +8,9 @@
       urls: ["*"],
       debug: false,
       namespace: "",
-      scope_prefix: "by",
-      nested_suffix: "attributes",
-      delete_attribute: "_delete"
+      scopePrefixes: ["by_", "has_"],
+      nestedSuffix: "attributes",
+      deleteAttribute: "_delete"
     };
     $.extend(config, options);
     $.mockjaxSettings.logging = config.debug;
@@ -63,7 +63,14 @@
       return request.data;
     };
     getRelationships = function(modelName) {
-      return Em.get(App[modelName.modelize()], "relationshipsByName");
+      var map;
+      map = Ember.Map.create();
+      App[modelName.modelize()].eachComputedProperty(function(name, meta) {
+        if (meta.isRelationship) {
+          return map.set(name, meta);
+        }
+      });
+      return map;
     };
     String.prototype.fixtureize = function() {
       return this.pluralize().camelize().capitalize();
@@ -84,8 +91,10 @@
         error("Fixtures not found for Model : " + fixtureName);
       }
       return config.fixtures[fixtureName].filter(function(record) {
-        var param;
-        for (param in params) {
+        var param, _i, _len, _ref;
+        _ref = Object.keys(params);
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          param = _ref[_i];
           if (!params.hasOwnProperty(param)) {
             continue;
           }
@@ -100,7 +109,7 @@
     };
     buildResponseJSON = function(modelName, queryParams) {
       responseJSON[modelName] = findRecords(modelName, queryParams);
-      return getRelatedRecords(modelName);
+      return getSideloadedRecords(modelName);
     };
     getRelationshipIds = function(modelName, relatedModel, relationshipType) {
       var ids;
@@ -114,7 +123,14 @@
       });
       return uniqueArray(ids);
     };
-    getRelatedRecords = function(modelName) {
+    normalizeRequest = function(request) {
+      var params;
+      params = $.parseParams(request.url);
+      request.url = request.url.split("?")[0];
+      request.data = request.data ? $.merge(request.data, params) : params;
+      return request;
+    };
+    getSideloadedRecords = function(modelName) {
       var relationships;
       relationships = getRelationships(modelName);
       return relationships.forEach(function(relatedModel, relationship) {
@@ -125,7 +141,7 @@
         params = [];
         params["ids"] = getRelationshipIds(modelName, relatedModel, relationship.kind);
         responseJSON[relatedModel.resourceize()] = findRecords(relatedModel, params);
-        return getRelatedRecords(relatedModel);
+        return getSideloadedRecords(relatedModel);
       });
     };
     getNextFixtureID = function(modelName) {
@@ -270,6 +286,7 @@
       response: function(request) {
         var errorObj, id, newRecord, queryParams, requestType, rootModelName, updateFixture, updateRecord;
         responseJSON = {};
+        request = normalizeRequest(request);
         requestType = getRequestType(request);
         rootModelName = getModelName(request);
         errorObj = {
@@ -311,6 +328,85 @@
         }
       }
     });
+  };
+})(jQuery);
+
+(function($) {
+  var decode, re;
+  re = /([^&=]+)=?([^&]*)/g;
+  decode = function(str) {
+    return decodeURIComponent(str.replace(/\+/g, " "));
+  };
+  $.parseParams = function(query) {
+    var createElement, e, key, params, value;
+    createElement = function(params, key, value) {
+      var index, list, new_key;
+      key = key + "";
+      if (key.indexOf(".") !== -1) {
+        list = key.split(".");
+        new_key = key.split(/\.(.+)?/)[1];
+        if (!params[list[0]]) {
+          params[list[0]] = {};
+        }
+        if (new_key !== "") {
+          createElement(params[list[0]], new_key, value);
+        } else {
+          console.warn("parseParams :: empty property in key \"" + key + "\"");
+        }
+      } else if (key.indexOf("[") !== -1) {
+        list = key.split("[");
+        key = list[0];
+        list = list[1].split("]");
+        index = list[0];
+        if (index === "") {
+          if (!params) {
+            params = {};
+          }
+          if (!params[key] || !$.isArray(params[key])) {
+            params[key] = [];
+          }
+          params[key].push(value);
+        } else {
+          if (!params) {
+            params = {};
+          }
+          if (!params[key] || !$.isArray(params[key])) {
+            params[key] = [];
+          }
+          params[key][parseInt(index)] = value;
+        }
+      } else {
+        if (!params) {
+          params = {};
+        }
+        params[key] = value;
+      }
+    };
+    query = query + "";
+    if (query === "") {
+      query = window.location + "";
+    }
+    params = {};
+    e = void 0;
+    if (query) {
+      if (query.indexOf("#") !== -1) {
+        query = query.substr(0, query.indexOf("#"));
+      }
+      if (query.indexOf("?") !== -1) {
+        query = query.substr(query.indexOf("?") + 1, query.length);
+      } else {
+        return {};
+      }
+      if (query === "") {
+        return {};
+      }
+      while (e = re.exec(query)) {
+        key = decode(e[1]);
+        value = decode(e[2]);
+        createElement(params, key, value);
+      }
+    }
+    return params;
   };
 })(jQuery);
 
