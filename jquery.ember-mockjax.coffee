@@ -22,7 +22,10 @@
         for param in queryParams
           scope_param = param.replace "by_", ""
           if typeof requestData[param] is "object" and requestData[param] isnt null
-            if element[scope_param.singularize()].toString() in requestData[param] or element[scope_param.singularize()] in requestData[param]
+            try
+              if element[scope_param.singularize()].toString() in requestData[param] or element[scope_param.singularize()] in requestData[param]
+                matches += 1
+            catch
               matches += 1
           else
             matchParam = requestData[param]
