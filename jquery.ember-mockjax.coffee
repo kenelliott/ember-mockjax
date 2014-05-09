@@ -76,7 +76,21 @@
 
     findRecords = (modelName, params) ->
       fixtureName = modelName.fixtureize()
+      console.log getRelatedFixtureIds("medals", "player", 1)
       error("Fixtures not found for Model : #{fixtureName}") unless config.fixtures[fixtureName]
+
+      # /medals?by_player_id=1
+
+      # for param in Object.keys(params)
+      #   if param.match(prefixRegex)
+      #     withoutPrefix = param.replace(prefixRegex, "")
+      #     paramModel = withoutPrefix.replace("_id", "")
+      #     if App[modelName.modelize()].hasOwnProperty(paramModel)
+      #       relationships = getRelationships(modelName)
+      #     else
+      #       relationships = getRelationships(paramModel)
+      #       params.ids = getRelationshipIds(paramModel, modelName, "hasMany", params[param])
+
       config.fixtures[fixtureName].filter (record) ->
         for param in Object.keys(params)
           continue unless params.hasOwnProperty(param)
@@ -85,6 +99,21 @@
           else if param is "ids" and params[param].indexOf(record.id.toString()) < 0
             return false
         true
+
+    getRelatedFixtureIds = (model, subModel, subModelId) ->
+      ids = []
+      for record in config.fixtures[model.fixtureize()]
+        if record["#{subModel.attributize()}_ids"] and subModelId in record["#{subModel.attributize()}_ids"]
+          ids.push record.id # add player id to list
+        else if record["#{subModel.attributize()}_id"] and record["#{subModel.attributize()}_id"] is subModelId
+          ids.push record.id
+
+      subModelRecord = getFixtureById(subModel, subModelId)
+      if "#{model.attributize()}_ids" in subModelRecord
+        $.merge(ids, record['#{model.attributize()}_ids'])
+      else if "#{model.attributize()}_id" in subModelRecord
+        ids.push record["#{model.attributize()}_id"]
+      uniqueArray ids
 
     buildResponseJSON = (modelName, queryParams) ->
       responseJSON[modelName] = findRecords(modelName, queryParams)

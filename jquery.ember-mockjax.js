@@ -1,6 +1,8 @@
+var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
 (function($) {
   return $.emberMockJax = function(options) {
-    var addError, addFixtureRecord, addRelatedFixtureRecords, buildResponseJSON, checkValidations, config, error, findRecords, getFactory, getFixtureById, getModelName, getNextFixtureID, getQueryParams, getRelationshipIds, getRelationships, getRequestType, getSideloadedRecords, log, normalizeRequest, removeIgnoredAttributes, responseJSON, setDefaultValues, setRecordDefaults, splitUrl, uniqueArray, validate;
+    var addError, addFixtureRecord, addRelatedFixtureRecords, buildResponseJSON, checkValidations, config, error, findRecords, getFactory, getFixtureById, getModelName, getNextFixtureID, getQueryParams, getRelatedFixtureIds, getRelationshipIds, getRelationships, getRequestType, getSideloadedRecords, log, normalizeRequest, removeIgnoredAttributes, responseJSON, setDefaultValues, setRecordDefaults, splitUrl, uniqueArray, validate;
     responseJSON = {};
     config = {
       fixtures: {},
@@ -87,6 +89,7 @@
     findRecords = function(modelName, params) {
       var fixtureName;
       fixtureName = modelName.fixtureize();
+      console.log(getRelatedFixtureIds("medals", "player", 1));
       if (!config.fixtures[fixtureName]) {
         error("Fixtures not found for Model : " + fixtureName);
       }
@@ -106,6 +109,27 @@
         }
         return true;
       });
+    };
+    getRelatedFixtureIds = function(model, subModel, subModelId) {
+      var ids, record, subModelRecord, _i, _len, _ref, _ref1, _ref2;
+      console.log("yoyoy");
+      ids = [];
+      _ref = config.fixtures[model.fixtureize()];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        record = _ref[_i];
+        if (record["" + (subModel.attributize()) + "_ids"] && __indexOf.call(record["" + (subModel.attributize()) + "_ids"], subModelId) >= 0) {
+          ids.push(record.id);
+        } else if (record["" + (subModel.attributize()) + "_id"] && record["" + (subModel.attributize()) + "_id"] === subModelId) {
+          ids.push(record.id);
+        }
+      }
+      subModelRecord = getFixtureById(subModel, subModelId);
+      if (_ref1 = "" + (model.attributize()) + "_ids", __indexOf.call(subModelRecord, _ref1) >= 0) {
+        $.merge(ids, record['#{model.attributize()}_ids']);
+      } else if (_ref2 = "" + (model.attributize()) + "_id", __indexOf.call(subModelRecord, _ref2) >= 0) {
+        ids.push(record["" + (model.attributize()) + "_id"]);
+      }
+      return uniqueArray(ids);
     };
     buildResponseJSON = function(modelName, queryParams) {
       responseJSON[modelName] = findRecords(modelName, queryParams);
