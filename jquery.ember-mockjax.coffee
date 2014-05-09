@@ -236,6 +236,12 @@
 
           @responseText = getRelatedModels(resourceName, fixtures, json)
 
+        @responseText.meta = 
+          pagination:
+            total_pages: 0
+            total_count: 0
+            current_page: 1
+
         console.log "MOCK RSP:", request.url, @responseText if $.mockjaxSettings.logging
 
 ) jQuery
