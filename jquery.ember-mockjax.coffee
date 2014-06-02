@@ -231,6 +231,9 @@
           console.warn("Fixtures not found for Model : #{modelName}") unless fixtures[fixtureName]
           if queryParams.length
             json[resourceName] = findRecords(fixtures,fixtureName,queryParams,request.data)
+            if json[resourceName].length is 0 and queryParams.contains("ids")
+              @status = 404
+              @statusText = "Not Found"
           else
             json[resourceName] = fixtures[fixtureName]
 

@@ -303,6 +303,10 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
           }
           if (queryParams.length) {
             json[resourceName] = findRecords(fixtures, fixtureName, queryParams, request.data);
+            if (json[resourceName].length === 0 && queryParams.contains("ids")) {
+              this.status = 404;
+              this.statusText = "Not Found";
+            }
           } else {
             json[resourceName] = fixtures[fixtureName];
           }
