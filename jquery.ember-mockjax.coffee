@@ -5,8 +5,9 @@
       fixtures: {}
       urls: ["*"]
       debug: false
+      ignored_attrs: ["sort_by", "per", "page"]
 
-    settings = $.extend settings, options
+    settings = $.extend config, options
 
     log = (msg) ->
       console?.log msg if settings.debug
@@ -15,6 +16,17 @@
       parser = document.createElement('a')
       parser.href = url
       parser
+
+    unparam = (value) ->
+      params = {}
+      pieces = value.split("&")
+      i = 0
+      l = pieces.length
+      while i < l
+        pair = pieces[i].split("=", 2)
+        params[decodeURIComponent(pair[0])] = ((if pair.length is 2 then decodeURIComponent(pair[1].replace(/\+/g, " ")) else true))
+        i++
+      params
 
     findRecords = (fixtures, fixtureName, queryParams, requestData) ->
       fixtures[fixtureName].filter (element, index) ->
@@ -160,9 +172,20 @@
         json                    = {}
 
         requestType             = request.type.toLowerCase()
-        pathObject              = parseUrl(request.url)["pathname"].split("/")
+        parsedUrl               = parseUrl(request.url)
+        pathObject              = parsedUrl.pathname.split("/")
+        pathParams              = parsedUrl.search.slice(1)
         modelName               = pathObject.slice(-1).pop()
         putId                   = null
+
+        request.data            = $.extend(request.data, unparam(pathParams)) if pathParams
+
+        if request.data and typeof request.data is "object"
+          if request.data.archived is "false"
+            request.data.archived = false
+          else request.data.archived = true  if request.data.archived is "true"
+          Object.keys(request.data).forEach (attr) ->
+            delete request.data[attr]  if attr in settings.ignored_attrs
 
         if /^[0-9]+$/.test modelName
           if requestType is "get"

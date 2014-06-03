@@ -2,13 +2,14 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
 
 (function($) {
   return $.emberMockJax = function(options) {
-    var addRecord, addRelatedRecord, addRelatedRecords, allPropsNull, buildErrorObject, config, findRecords, flattenObject, getRelatedModels, getRelationships, log, parseUrl, setErrorMessages, settings, sideloadRecords, uniqueArray;
+    var addRecord, addRelatedRecord, addRelatedRecords, allPropsNull, buildErrorObject, config, findRecords, flattenObject, getRelatedModels, getRelationships, log, parseUrl, setErrorMessages, settings, sideloadRecords, uniqueArray, unparam;
     config = {
       fixtures: {},
       urls: ["*"],
-      debug: false
+      debug: false,
+      ignored_attrs: ["sort_by", "per", "page"]
     };
-    settings = $.extend(settings, options);
+    settings = $.extend(config, options);
     log = function(msg) {
       if (settings.debug) {
         return typeof console !== "undefined" && console !== null ? console.log(msg) : void 0;
@@ -19,6 +20,19 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       parser = document.createElement('a');
       parser.href = url;
       return parser;
+    };
+    unparam = function(value) {
+      var i, l, pair, params, pieces;
+      params = {};
+      pieces = value.split("&");
+      i = 0;
+      l = pieces.length;
+      while (i < l) {
+        pair = pieces[i].split("=", 2);
+        params[decodeURIComponent(pair[0])] = (pair.length === 2 ? decodeURIComponent(pair[1].replace(/\+/g, " ")) : true);
+        i++;
+      }
+      return params;
     };
     findRecords = function(fixtures, fixtureName, queryParams, requestData) {
       return fixtures[fixtureName].filter(function(element, index) {
@@ -209,13 +223,32 @@ var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; 
       url: "*",
       responseTime: 0,
       response: function(request) {
-        var emberRelationships, fixtureName, fixtures, json, modelAttributes, modelName, new_record, pathObject, putId, queryParams, requestType, resourceName, singleResourceName;
+        var emberRelationships, fixtureName, fixtures, json, modelAttributes, modelName, new_record, parsedUrl, pathObject, pathParams, putId, queryParams, requestType, resourceName, singleResourceName;
         queryParams = [];
         json = {};
         requestType = request.type.toLowerCase();
-        pathObject = parseUrl(request.url)["pathname"].split("/");
+        parsedUrl = parseUrl(request.url);
+        pathObject = parsedUrl.pathname.split("/");
+        pathParams = parsedUrl.search.slice(1);
         modelName = pathObject.slice(-1).pop();
         putId = null;
+        if (pathParams) {
+          request.data = $.extend(request.data, unparam(pathParams));
+        }
+        if (request.data && typeof request.data === "object") {
+          if (request.data.archived === "false") {
+            request.data.archived = false;
+          } else {
+            if (request.data.archived === "true") {
+              request.data.archived = true;
+            }
+          }
+          Object.keys(request.data).forEach(function(attr) {
+            if (__indexOf.call(settings.ignored_attrs, attr) >= 0) {
+              return delete request.data[attr];
+            }
+          });
+        }
         if (/^[0-9]+$/.test(modelName)) {
           if (requestType === "get") {
             if (typeof request.data === "undefined") {
